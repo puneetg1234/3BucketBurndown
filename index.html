@@ -1,680 +1,680 @@
-<!DOCTYPE html> -->
-<!-- <html lang="en"> -->
-<!-- <head> -->
-<!-- <meta charset="utf-8"> -->
-<!-- <meta name="viewport" content="width=device-width, initial-scale=1"> -->
-<!-- <title>Three-bucket burndown</title> -->
-<!-- <link rel="preconnect" href="https://fonts.googleapis.com"> -->
-<!-- <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> -->
-<!-- <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Archivo:wght@400;500;600&display=swap" rel="stylesheet"> -->
-<!-- <style> -->
-<!-- :root{ -->
-  <!-- --ink:#16262c; -->
-  <!-- --muted:#5f726f; -->
-  <!-- --paper:#edf0ee; -->
-  <!-- --panel:#ffffff; -->
-  <!-- --rule:#d2dbd7; -->
-  <!-- --rule-soft:#e3e9e6; -->
-  <!-- --ef:#c2833a; -->
-  <!-- --b1:#4a9285; -->
-  <!-- --b2:#2c6d93; -->
-  <!-- --b3:#2a3a6b; -->
-  <!-- --bad:#a63328; -->
-  <!-- --focus:#2c6d93; -->
-  <!-- --serif:"Fraunces",Iowan Old Style,Georgia,serif; -->
-  <!-- --sans:"Archivo",-apple-system,Segoe UI,Roboto,sans-serif; -->
-<!-- } -->
-<!-- *{box-sizing:border-box} -->
-<!-- html,body{margin:0} -->
-<!-- body{ -->
-  <!-- background:var(--paper);color:var(--ink); -->
-  <!-- font-family:var(--sans);font-size:15px;line-height:1.5; -->
-  <!-- -webkit-font-smoothing:antialiased; -->
-<!-- } -->
-<!-- .num{font-variant-numeric:tabular-nums} -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Three-bucket burndown</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Archivo:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#16262c;
+  --muted:#5f726f;
+  --paper:#edf0ee;
+  --panel:#ffffff;
+  --rule:#d2dbd7;
+  --rule-soft:#e3e9e6;
+  --ef:#c2833a;
+  --b1:#4a9285;
+  --b2:#2c6d93;
+  --b3:#2a3a6b;
+  --bad:#a63328;
+  --focus:#2c6d93;
+  --serif:"Fraunces",Iowan Old Style,Georgia,serif;
+  --sans:"Archivo",-apple-system,Segoe UI,Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-size:15px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.num{font-variant-numeric:tabular-nums}
 
-<!-- .wrap{max-width:1280px;margin:0 auto;padding:28px 22px 72px} -->
-<!-- .masthead{display:flex;flex-wrap:wrap;gap:14px 28px;align-items:baseline; -->
-  <!-- padding-bottom:18px;border-bottom:1px solid var(--rule)} -->
-<!-- .masthead h1{font-family:var(--serif);font-weight:600;font-size:26px;margin:0;letter-spacing:-.01em} -->
-<!-- .masthead p{margin:0;color:var(--muted);max-width:54ch;font-size:14px} -->
+.wrap{max-width:1280px;margin:0 auto;padding:28px 22px 72px}
+.masthead{display:flex;flex-wrap:wrap;gap:14px 28px;align-items:baseline;
+  padding-bottom:18px;border-bottom:1px solid var(--rule)}
+.masthead h1{font-family:var(--serif);font-weight:600;font-size:26px;margin:0;letter-spacing:-.01em}
+.masthead p{margin:0;color:var(--muted);max-width:54ch;font-size:14px}
 
-<!-- .layout{display:grid;grid-template-columns:390px minmax(0,1fr);gap:34px;margin-top:26px;align-items:start} -->
-<!-- @media (max-width:960px){.layout{grid-template-columns:1fr;gap:26px}} -->
+.layout{display:grid;grid-template-columns:390px minmax(0,1fr);gap:34px;margin-top:26px;align-items:start}
+@media (max-width:960px){.layout{grid-template-columns:1fr;gap:26px}}
 
-<!-- /* ---------- input rail ---------- */ -->
-<!-- .rail{position:sticky;top:20px} -->
-<!-- @media (max-width:960px){.rail{position:static}} -->
-<!-- .rail-inner{background:var(--panel);border:1px solid var(--rule);border-radius:3px; -->
-  <!-- padding:20px 18px;max-height:calc(100vh - 40px);overflow-y:auto} -->
-<!-- @media (max-width:960px){.rail-inner{max-height:none}} -->
-<!-- .rail h2{font-family:var(--serif);font-weight:600;font-size:17px;margin:0 0 4px} -->
-<!-- .rail .hint{color:var(--muted);font-size:13px;margin:0 0 18px} -->
+/* ---------- input rail ---------- */
+.rail{position:sticky;top:20px}
+@media (max-width:960px){.rail{position:static}}
+.rail-inner{background:var(--panel);border:1px solid var(--rule);border-radius:3px;
+  padding:20px 18px;max-height:calc(100vh - 40px);overflow-y:auto}
+@media (max-width:960px){.rail-inner{max-height:none}}
+.rail h2{font-family:var(--serif);font-weight:600;font-size:17px;margin:0 0 4px}
+.rail .hint{color:var(--muted);font-size:13px;margin:0 0 18px}
 
-<!-- fieldset{border:0;padding:0;margin:0 0 20px} -->
-<!-- fieldset legend{font-size:13px;font-weight:600;color:var(--muted);padding:0 0 8px; -->
-  <!-- border-bottom:1px solid var(--rule-soft);width:100%;margin-bottom:12px} -->
+fieldset{border:0;padding:0;margin:0 0 20px}
+fieldset legend{font-size:13px;font-weight:600;color:var(--muted);padding:0 0 8px;
+  border-bottom:1px solid var(--rule-soft);width:100%;margin-bottom:12px}
 
-<!-- .field{display:grid;grid-template-columns:minmax(0,1fr) 168px;gap:12px;align-items:center;margin-bottom:12px} -->
-<!-- .field label{font-size:13.5px;line-height:1.3} -->
-<!-- .field .sub{display:block;color:var(--muted);font-size:12px} -->
-<!-- input[type=number]{ -->
-  <!-- width:100%;font:inherit;font-size:15px;font-variant-numeric:tabular-nums;text-align:right; -->
-  <!-- padding:9px 10px;border:1px solid var(--rule);border-radius:2px;background:#fbfcfb;color:var(--ink); -->
-<!-- } -->
-<!-- input[type=number]:focus-visible{outline:2px solid var(--focus);outline-offset:1px;border-color:transparent} -->
-<!-- input.narrow{padding:8px 8px;font-size:14px;min-width:56px;text-align:center; -->
-  <!-- -moz-appearance:textfield;appearance:textfield} -->
-<!-- input.narrow::-webkit-outer-spin-button, -->
-<!-- input.narrow::-webkit-inner-spin-button{-webkit-appearance:none;margin:0} -->
+.field{display:grid;grid-template-columns:minmax(0,1fr) 168px;gap:12px;align-items:center;margin-bottom:12px}
+.field label{font-size:13.5px;line-height:1.3}
+.field .sub{display:block;color:var(--muted);font-size:12px}
+input[type=number]{
+  width:100%;font:inherit;font-size:15px;font-variant-numeric:tabular-nums;text-align:right;
+  padding:9px 10px;border:1px solid var(--rule);border-radius:2px;background:#fbfcfb;color:var(--ink);
+}
+input[type=number]:focus-visible{outline:2px solid var(--focus);outline-offset:1px;border-color:transparent}
+input.narrow{padding:8px 8px;font-size:14px;min-width:56px;text-align:center;
+  -moz-appearance:textfield;appearance:textfield}
+input.narrow::-webkit-outer-spin-button,
+input.narrow::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 
-<!-- .matrix{width:100%;border-collapse:collapse;font-size:12.5px} -->
-<!-- .matrix th,.matrix td{padding:5px 4px;text-align:center} -->
-<!-- .matrix thead th{color:var(--muted);font-weight:500;line-height:1.2;vertical-align:bottom;font-size:11.5px} -->
-<!-- .matrix tbody th{text-align:left;font-weight:500;white-space:nowrap;padding-right:6px} -->
-<!-- .matrix .sep td,.matrix .sep th{border-top:1px solid var(--rule-soft);padding-top:9px} -->
-<!-- .matrix .sum{color:var(--muted);font-variant-numeric:tabular-nums;padding-left:6px} -->
-<!-- .matrix .sum.off{color:var(--bad);font-weight:600} -->
-<!-- .swatch{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px} -->
-<!-- .matrix-scroll{overflow-x:auto;margin:0 -4px} -->
-<!-- .warn{color:var(--bad);font-size:13px;margin:10px 0 0;display:none} -->
+.matrix{width:100%;border-collapse:collapse;font-size:12.5px}
+.matrix th,.matrix td{padding:5px 4px;text-align:center}
+.matrix thead th{color:var(--muted);font-weight:500;line-height:1.2;vertical-align:bottom;font-size:11.5px}
+.matrix tbody th{text-align:left;font-weight:500;white-space:nowrap;padding-right:6px}
+.matrix .sep td,.matrix .sep th{border-top:1px solid var(--rule-soft);padding-top:9px}
+.matrix .sum{color:var(--muted);font-variant-numeric:tabular-nums;padding-left:6px}
+.matrix .sum.off{color:var(--bad);font-weight:600}
+.swatch{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px}
+.matrix-scroll{overflow-x:auto;margin:0 -4px}
+.warn{color:var(--bad);font-size:13px;margin:10px 0 0;display:none}
 
-<!-- .btn{font:inherit;font-size:13.5px;padding:7px 13px;border:1px solid var(--rule); -->
-  <!-- background:#fbfcfb;color:var(--ink);border-radius:2px;cursor:pointer} -->
-<!-- .btn:hover{background:#f0f3f1} -->
-<!-- .btn:focus-visible{outline:2px solid var(--focus);outline-offset:1px} -->
-<!-- .rail-actions{display:flex;gap:8px} -->
+.btn{font:inherit;font-size:13.5px;padding:7px 13px;border:1px solid var(--rule);
+  background:#fbfcfb;color:var(--ink);border-radius:2px;cursor:pointer}
+.btn:hover{background:#f0f3f1}
+.btn:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+.rail-actions{display:flex;gap:8px}
 
-<!-- /* ---------- verdict ---------- */ -->
-<!-- .verdict{font-family:var(--serif);font-weight:600;font-size:clamp(28px,4.4vw,42px); -->
-  <!-- line-height:1.12;letter-spacing:-.02em;margin:0 0 10px;max-width:22ch} -->
-<!-- .verdict em{font-style:normal;border-bottom:3px solid var(--b1);padding-bottom:1px} -->
-<!-- .verdict.short em{border-color:var(--bad)} -->
-<!-- .verdict-note{color:var(--muted);margin:0 0 22px;max-width:64ch;font-size:14px} -->
+/* ---------- verdict ---------- */
+.verdict{font-family:var(--serif);font-weight:600;font-size:clamp(28px,4.4vw,42px);
+  line-height:1.12;letter-spacing:-.02em;margin:0 0 10px;max-width:22ch}
+.verdict em{font-style:normal;border-bottom:3px solid var(--b1);padding-bottom:1px}
+.verdict.short em{border-color:var(--bad)}
+.verdict-note{color:var(--muted);margin:0 0 22px;max-width:64ch;font-size:14px}
 
-<!-- /* ---------- chart ---------- */ -->
-<!-- .chart-card{background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:16px 16px 12px;position:relative} -->
-<!-- .chart-head{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;margin-bottom:10px} -->
-<!-- .chart-head h3{font-size:14px;margin:0;font-weight:600} -->
-<!-- .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--muted);margin-top:6px} -->
-<!-- .legend span{display:flex;align-items:center;gap:5px} -->
-<!-- .legend i{width:10px;height:10px;border-radius:2px;display:block} -->
-<!-- svg{display:block;width:100%;height:auto;touch-action:pan-y} -->
-<!-- .tip{position:absolute;pointer-events:none;background:var(--ink);color:#fff;border-radius:3px; -->
-  <!-- padding:8px 10px;font-size:12px;line-height:1.45;opacity:0;transition:opacity .12s;white-space:nowrap;z-index:5} -->
-<!-- .tip.on{opacity:1} -->
-<!-- .tip b{font-weight:600} -->
-<!-- .tip .row{display:flex;justify-content:space-between;gap:14px;font-variant-numeric:tabular-nums} -->
-<!-- .tip .row i{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:5px} -->
+/* ---------- chart ---------- */
+.chart-card{background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:16px 16px 12px;position:relative}
+.chart-head{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.chart-head h3{font-size:14px;margin:0;font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--muted);margin-top:6px}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:10px;height:10px;border-radius:2px;display:block}
+svg{display:block;width:100%;height:auto;touch-action:pan-y}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:#fff;border-radius:3px;
+  padding:8px 10px;font-size:12px;line-height:1.45;opacity:0;transition:opacity .12s;white-space:nowrap;z-index:5}
+.tip.on{opacity:1}
+.tip b{font-weight:600}
+.tip .row{display:flex;justify-content:space-between;gap:14px;font-variant-numeric:tabular-nums}
+.tip .row i{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:5px}
 
-<!-- /* ---------- bucket cards ---------- */ -->
-<!-- .cascade{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:26px 0 0} -->
-<!-- @media (max-width:760px){.cascade{grid-template-columns:1fr 1fr}} -->
-<!-- .bucket{background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:13px 14px;position:relative} -->
-<!-- .bucket::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c)} -->
-<!-- .bucket h4{margin:0 0 2px;font-size:13.5px;font-weight:600} -->
-<!-- .bucket .role{color:var(--muted);font-size:12px;line-height:1.35;margin:0 0 10px;min-height:4em} -->
-<!-- .bucket .val{font-family:var(--serif);font-size:21px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em} -->
-<!-- .bucket .meta{color:var(--muted);font-size:12px;margin-top:6px;font-variant-numeric:tabular-nums} -->
-<!-- .cascade-note{color:var(--muted);font-size:12.5px;margin:10px 0 0;max-width:74ch} -->
+/* ---------- bucket cards ---------- */
+.cascade{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:26px 0 0}
+@media (max-width:760px){.cascade{grid-template-columns:1fr 1fr}}
+.bucket{background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:13px 14px;position:relative}
+.bucket::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c)}
+.bucket h4{margin:0 0 2px;font-size:13.5px;font-weight:600}
+.bucket .role{color:var(--muted);font-size:12px;line-height:1.35;margin:0 0 10px;min-height:4em}
+.bucket .val{font-family:var(--serif);font-size:21px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.bucket .meta{color:var(--muted);font-size:12px;margin-top:6px;font-variant-numeric:tabular-nums}
+.cascade-note{color:var(--muted);font-size:12.5px;margin:10px 0 0;max-width:74ch}
 
-<!-- /* ---------- table ---------- */ -->
-<!-- .table-head{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;justify-content:space-between;margin:32px 0 10px} -->
-<!-- .table-head h3{font-family:var(--serif);font-size:19px;font-weight:600;margin:0} -->
-<!-- .table-wrap{background:var(--panel);border:1px solid var(--rule);border-radius:3px;overflow:auto;max-height:460px} -->
-<!-- table.years{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums} -->
-<!-- table.years th,table.years td{padding:7px 12px;text-align:right;white-space:nowrap} -->
-<!-- table.years thead th{position:sticky;top:0;background:var(--panel);border-bottom:1px solid var(--rule); -->
-  <!-- font-weight:600;font-size:12px;color:var(--muted);z-index:1} -->
-<!-- table.years th:first-child,table.years td:first-child{text-align:left} -->
-<!-- table.years tbody tr+tr td{border-top:1px solid var(--rule-soft)} -->
-<!-- table.years tr.dry td,table.years tr.dry th{background:#fbf0ee;color:var(--bad)} -->
-<!-- table.years tbody th{text-align:left;font-weight:500;padding:7px 12px} -->
+/* ---------- table ---------- */
+.table-head{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;justify-content:space-between;margin:32px 0 10px}
+.table-head h3{font-family:var(--serif);font-size:19px;font-weight:600;margin:0}
+.table-wrap{background:var(--panel);border:1px solid var(--rule);border-radius:3px;overflow:auto;max-height:460px}
+table.years{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+table.years th,table.years td{padding:7px 12px;text-align:right;white-space:nowrap}
+table.years thead th{position:sticky;top:0;background:var(--panel);border-bottom:1px solid var(--rule);
+  font-weight:600;font-size:12px;color:var(--muted);z-index:1}
+table.years th:first-child,table.years td:first-child{text-align:left}
+table.years tbody tr+tr td{border-top:1px solid var(--rule-soft)}
+table.years tr.dry td,table.years tr.dry th{background:#fbf0ee;color:var(--bad)}
+table.years tbody th{text-align:left;font-weight:500;padding:7px 12px}
 
-<!-- footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--rule);color:var(--muted);font-size:12.5px;max-width:80ch} -->
-<!-- footer p{margin:0 0 8px} -->
-<!-- footer h4{font-size:13px;color:var(--ink);margin:0 0 6px;font-weight:600} -->
-<!-- footer h4+h4{margin-top:14px} -->
-<!-- @media (prefers-reduced-motion:reduce){*{transition:none!important}} -->
-<!-- </style> -->
-<!-- </head> -->
-<!-- <body> -->
-<!-- <div class="wrap"> -->
+footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--rule);color:var(--muted);font-size:12.5px;max-width:80ch}
+footer p{margin:0 0 8px}
+footer h4{font-size:13px;color:var(--ink);margin:0 0 6px;font-weight:600}
+footer h4+h4{margin-top:14px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
 
-  <!-- <header class="masthead"> -->
-    <!-- <h1>Three-bucket Burndown Model</h1> -->
-	<!-- <p><b>Simulates a retirement corpus burndown.</b><br>Corpus is split across an Emergency Fund and three buckets. Each bucket refills once a year from the one behind it. Emergency fund is sealed with no withdrawals. Redemptions are taxed.</p> -->
-  <!-- </header> -->
+  <header class="masthead">
+    <h1>Three-bucket Burndown Model</h1>
+	<p><b>Simulates a retirement corpus burndown.</b><br>Corpus is split across an Emergency Fund and three buckets. Each bucket refills once a year from the one behind it. Emergency fund is sealed with no withdrawals. Redemptions are taxed.</p>
+  </header>
 
-  <!-- <div class="layout"> -->
+  <div class="layout">
 
-    ============ INPUTS ============
-    <!-- <aside class="rail"> -->
-      <!-- <div class="rail-inner"> -->
-        <!-- <h2><b>Your plan</b></h2> -->
-        <!-- <p class="hint">Everything recalculates as you type.</p> -->
+    <!-- ============ INPUTS ============ -->
+    <aside class="rail">
+      <div class="rail-inner">
+        <h2><b>Your plan</b></h2>
+        <p class="hint">Everything recalculates as you type.</p>
 
-        <!-- <fieldset> -->
-          <!-- <legend><b>Money</b></legend> -->
-          <!-- <div class="field"> -->
-            <!-- <label for="corpus"><b>Retirement corpus</b><span class="sub">Withdrawals only — leave out goal money; Net of any outstanding loans</span></label> -->
-            <!-- <input id="corpus" type="number" min="0" step="100000" value="10000000"> -->
-          <!-- </div> -->
-          <!-- <div class="field"> -->
-            <!-- <label for="expense"><b>Monthly expenses</b><span class="sub">Over and above pension or rent</span></label> -->
-            <!-- <input id="expense" type="number" min="0" step="5000" value="100000"> -->
-          <!-- </div> -->
-          <!-- <div class="field"> -->
-            <!-- <label for="inflation"><b>Inflation</b><span class="sub">% a year, applied to the spend</span></label> -->
-            <!-- <input id="inflation" type="number" step="0.1" value="7"> -->
-          <!-- </div> -->
-          <!-- <div class="field"> -->
-            <!-- <label for="horizon"><b>Years to project</b></label> -->
-            <!-- <input id="horizon" type="number" min="2" max="90" step="1" value="40"> -->
-          <!-- </div> -->
-        <!-- </fieldset> -->
+        <fieldset>
+          <legend><b>Money</b></legend>
+          <div class="field">
+            <label for="corpus"><b>Retirement corpus</b><span class="sub">Withdrawals only — leave out goal money; Net of any outstanding loans</span></label>
+            <input id="corpus" type="number" min="0" step="100000" value="10000000">
+          </div>
+          <div class="field">
+            <label for="expense"><b>Monthly expenses</b><span class="sub">Over and above pension or rent</span></label>
+            <input id="expense" type="number" min="0" step="5000" value="100000">
+          </div>
+          <div class="field">
+            <label for="inflation"><b>Inflation</b><span class="sub">% a year, applied to the spend</span></label>
+            <input id="inflation" type="number" step="0.1" value="7">
+          </div>
+          <div class="field">
+            <label for="horizon"><b>Years to project</b></label>
+            <input id="horizon" type="number" min="2" max="90" step="1" value="40">
+          </div>
+        </fieldset>
 
-        <!-- <fieldset> -->
-          <!-- <legend><b>Opening sizes, in unit months of expenses</b></legend> -->
-          <!-- <div class="field"> -->
-            <!-- <label for="mEF"><span class="swatch" style="background:var(--ef)"></span><b>Emergency Fund</b><span class="sub">Sealed — no withdrawals</span></label> -->
-            <!-- <input id="mEF" type="number" min="0" step="1" value="12"> -->
-          <!-- </div> -->
-          <!-- <div class="field"> -->
-            <!-- <label for="mB1"><span class="swatch" style="background:var(--b1)"></span><b>Bucket 1</b><span class="sub">monthly withdrawals</span></label> -->
-            <!-- <input id="mB1" type="number" min="0" step="1" value="18"> -->
-          <!-- </div> -->
-          <!-- <div class="field"> -->
-            <!-- <label for="mB2"><span class="swatch" style="background:var(--b2)"></span><b>Bucket 2</b><span class="sub">refills Bucket 1 yearly</span></label> -->
-            <!-- <input id="mB2" type="number" min="0" step="1" value="48"> -->
-          <!-- </div> -->
-          <!-- <div class="field"> -->
-            <!-- <label><span class="swatch" style="background:var(--b3)"></span><b>Bucket 3</b><span class="sub">refills Bucket 2 yearly</span></label> -->
-            <!-- <input type="text" value="whatever is left" disabled -->
-              <!-- style="width:100%;font:inherit;font-size:13px;text-align:right;padding:9px 10px;border:1px dashed var(--rule);border-radius:2px;background:transparent;color:var(--muted)"> -->
-          <!-- </div> -->
-          <!-- <p class="warn" id="sizeWarn">The corpus is too small to fill the emergency fund and Buckets 1 and 2, so Bucket 3 starts empty.</p> -->
-        <!-- </fieldset> -->
+        <fieldset>
+          <legend><b>Opening sizes, in unit months of expenses</b></legend>
+          <div class="field">
+            <label for="mEF"><span class="swatch" style="background:var(--ef)"></span><b>Emergency Fund</b><span class="sub">Sealed — no withdrawals</span></label>
+            <input id="mEF" type="number" min="0" step="1" value="12">
+          </div>
+          <div class="field">
+            <label for="mB1"><span class="swatch" style="background:var(--b1)"></span><b>Bucket 1</b><span class="sub">monthly withdrawals</span></label>
+            <input id="mB1" type="number" min="0" step="1" value="18">
+          </div>
+          <div class="field">
+            <label for="mB2"><span class="swatch" style="background:var(--b2)"></span><b>Bucket 2</b><span class="sub">refills Bucket 1 yearly</span></label>
+            <input id="mB2" type="number" min="0" step="1" value="48">
+          </div>
+          <div class="field">
+            <label><span class="swatch" style="background:var(--b3)"></span><b>Bucket 3</b><span class="sub">refills Bucket 2 yearly</span></label>
+            <input type="text" value="whatever is left" disabled
+              style="width:100%;font:inherit;font-size:13px;text-align:right;padding:9px 10px;border:1px dashed var(--rule);border-radius:2px;background:transparent;color:var(--muted)">
+          </div>
+          <p class="warn" id="sizeWarn">The corpus is too small to fill the emergency fund and Buckets 1 and 2, so Bucket 3 starts empty.</p>
+        </fieldset>
 
-        <!-- <fieldset> -->
-          <!-- <legend><b>Asset mix, Weights and Tax Assumptions</b></legend> -->
-          <!-- <div class="matrix-scroll"> -->
-            <!-- <table class="matrix" id="matrix"> -->
-              <!-- <thead> -->
-                <!-- <tr> -->
-                  <!-- <th></th> -->
-                  <!-- <th>Equity<br>LargeCap</th> -->
-                  <!-- <th>Equity<br>MidCap/FlexiCap</th> -->
-                  <!-- <th>Debt<br>Bonds/GILT</th> -->
-                  <!-- <th>Debt<br>UltraShort</th> -->
-                  <!-- <th>Debt-Liquid<br>Equity-Arb</th> -->
-                  <!-- <th></th> -->
-                <!-- </tr> -->
-              <!-- </thead> -->
-              <!-- <tbody> -->
-                <!-- <tr> -->
-                  <!-- <th><b>Return %</b><br>pre-tax</th> -->
-                  <!-- <td><input class="narrow" data-k="ret" data-i="0" type="number" step="0.1" value="9"></td> -->
-                  <!-- <td><input class="narrow" data-k="ret" data-i="1" type="number" step="0.1" value="10"></td> -->
-                  <!-- <td><input class="narrow" data-k="ret" data-i="2" type="number" step="0.1" value="6"></td> -->
-                  <!-- <td><input class="narrow" data-k="ret" data-i="3" type="number" step="0.1" value="5.5"></td> -->
-                  <!-- <td><input class="narrow" data-k="ret" data-i="4" type="number" step="0.1" value="5"></td> -->
-                  <!-- <td></td> -->
-                <!-- </tr> -->
-                <!-- <tr> -->
-                  <!-- <th><b>Tax %</b><br>assumes long-term</th> -->
-                  <!-- <td><input class="narrow" data-k="tax" data-i="0" type="number" min="0" step="1" value="12"></td> -->
-                  <!-- <td><input class="narrow" data-k="tax" data-i="1" type="number" min="0" step="1" value="12"></td> -->
-                  <!-- <td><input class="narrow" data-k="tax" data-i="2" type="number" min="0" step="1" value="20"></td> -->
-                  <!-- <td><input class="narrow" data-k="tax" data-i="3" type="number" min="0" step="1" value="30"></td> -->
-                  <!-- <td><input class="narrow" data-k="tax" data-i="4" type="number" min="0" step="1" value="30"></td> -->
-                  <!-- <td></td> -->
-                <!-- </tr> -->
-                <!-- <tr class="sep"> -->
-                  <!-- <th><span class="swatch" style="background:var(--ef)"></span><b>Emergency Fund</b></th> -->
-                  <!-- <td><input class="narrow" data-k="w" data-b="0" data-i="0" type="number" min="0" step="5" value="0"></td> -->
-                  <!-- <td><input class="narrow" data-k="w" data-b="0" data-i="1" type="number" min="0" step="5" value="0"></td> -->
-                  <!-- <td><input class="narrow" data-k="w" data-b="0" data-i="2" type="number" min="0" step="5" value="0"></td> -->
-                  <!-- <td><input class="narrow" data-k="w" data-b="0" data-i="3" type="number" min="0" step="5" value="0"></td> -->
-                  <!-- <td><input class="narrow" data-k="w" data-b="0" data-i="4" type="number" min="0" step="5" value="100"></td> -->
-                  <!-- <td class="sum" data-sum="0">100</td> -->
-                <!-- </tr> -->
-                <!-- <tr> -->
-                  <!-- <th><span class="swatch" style="background:var(--b1)"></span><b>Bucket 1</b></th> -->
-                  <!-- <td><input class="narrow" data-k="w" data-b="1" data-i="0" type="number" min="0" step="5" value="0"></td> -->
-                  <!-- <td><input class="narrow" data-k="w" data-b="1" data-i="1" type="number" min="0" step="5" value="0"></td> -->
-                  <!-- <td><input class="narrow" data-k="w" data-b="1" data-i="2" type="number" min="0" step="5" value="0"></td> -->
-                  <!-- <td><input class="narrow" data-k="w" data-b="1" data-i="3" type="number" min="0" step="5" value="100"></td> -->
-                  <!-- <td><input class="narrow" data-k="w" data-b="1" data-i="4" type="number" min="0" step="5" value="0"></td> -->
-                  <!-- <td class="sum" data-sum="1">100</td> -->
-                <!-- </tr> -->
-                <!-- <tr> -->
-                  <!-- <th><span class="swatch" style="background:var(--b2)"></span><b>Bucket 2</b></th> -->
-                  <!-- <td><input class="narrow" data-k="w" data-b="2" data-i="0" type="number" min="0" step="5" value="20"></td> -->
-                  <!-- <td><input class="narrow" data-k="w" data-b="2" data-i="1" type="number" min="0" step="5" value="0"></td> -->
-                  <!-- <td><input class="narrow" data-k="w" data-b="2" data-i="2" type="number" min="0" step="5" value="80"></td> -->
-                  <!-- <td><input class="narrow" data-k="w" data-b="2" data-i="3" type="number" min="0" step="5" value="0"></td> -->
-                  <!-- <td><input class="narrow" data-k="w" data-b="2" data-i="4" type="number" min="0" step="5" value="0"></td> -->
-                  <!-- <td class="sum" data-sum="2">100</td> -->
-                <!-- </tr> -->
-                <!-- <tr> -->
-                  <!-- <th><span class="swatch" style="background:var(--b3)"></span><b>Bucket 3</b></th> -->
-                  <!-- <td><input class="narrow" data-k="w" data-b="3" data-i="0" type="number" min="0" step="5" value="0"></td> -->
-                  <!-- <td><input class="narrow" data-k="w" data-b="3" data-i="1" type="number" min="0" step="5" value="80"></td> -->
-                  <!-- <td><input class="narrow" data-k="w" data-b="3" data-i="2" type="number" min="0" step="5" value="20"></td> -->
-                  <!-- <td><input class="narrow" data-k="w" data-b="3" data-i="3" type="number" min="0" step="5" value="0"></td> -->
-                  <!-- <td><input class="narrow" data-k="w" data-b="3" data-i="4" type="number" min="0" step="5" value="0"></td> -->
-                  <!-- <td class="sum" data-sum="3">100</td> -->
-                <!-- </tr> -->
-              <!-- </tbody> -->
-            <!-- </table> -->
-          <!-- </div> -->
-          <!-- <p class="warn" id="weightWarn">Each bucket's weights must be non-negative and add up to 100.</p> -->
-        <!-- </fieldset> -->
+        <fieldset>
+          <legend><b>Asset mix, Weights and Tax Assumptions</b></legend>
+          <div class="matrix-scroll">
+            <table class="matrix" id="matrix">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Equity<br>LargeCap</th>
+                  <th>Equity<br>MidCap/FlexiCap</th>
+                  <th>Debt<br>Bonds/GILT</th>
+                  <th>Debt<br>UltraShort</th>
+                  <th>Debt-Liquid<br>Equity-Arb</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th><b>Return %</b><br>pre-tax</th>
+                  <td><input class="narrow" data-k="ret" data-i="0" type="number" step="0.1" value="9"></td>
+                  <td><input class="narrow" data-k="ret" data-i="1" type="number" step="0.1" value="10"></td>
+                  <td><input class="narrow" data-k="ret" data-i="2" type="number" step="0.1" value="6"></td>
+                  <td><input class="narrow" data-k="ret" data-i="3" type="number" step="0.1" value="5.5"></td>
+                  <td><input class="narrow" data-k="ret" data-i="4" type="number" step="0.1" value="5"></td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <th><b>Tax %</b><br>assumes long-term</th>
+                  <td><input class="narrow" data-k="tax" data-i="0" type="number" min="0" step="1" value="12"></td>
+                  <td><input class="narrow" data-k="tax" data-i="1" type="number" min="0" step="1" value="12"></td>
+                  <td><input class="narrow" data-k="tax" data-i="2" type="number" min="0" step="1" value="20"></td>
+                  <td><input class="narrow" data-k="tax" data-i="3" type="number" min="0" step="1" value="30"></td>
+                  <td><input class="narrow" data-k="tax" data-i="4" type="number" min="0" step="1" value="30"></td>
+                  <td></td>
+                </tr>
+                <tr class="sep">
+                  <th><span class="swatch" style="background:var(--ef)"></span><b>Emergency Fund</b></th>
+                  <td><input class="narrow" data-k="w" data-b="0" data-i="0" type="number" min="0" step="5" value="0"></td>
+                  <td><input class="narrow" data-k="w" data-b="0" data-i="1" type="number" min="0" step="5" value="0"></td>
+                  <td><input class="narrow" data-k="w" data-b="0" data-i="2" type="number" min="0" step="5" value="0"></td>
+                  <td><input class="narrow" data-k="w" data-b="0" data-i="3" type="number" min="0" step="5" value="0"></td>
+                  <td><input class="narrow" data-k="w" data-b="0" data-i="4" type="number" min="0" step="5" value="100"></td>
+                  <td class="sum" data-sum="0">100</td>
+                </tr>
+                <tr>
+                  <th><span class="swatch" style="background:var(--b1)"></span><b>Bucket 1</b></th>
+                  <td><input class="narrow" data-k="w" data-b="1" data-i="0" type="number" min="0" step="5" value="0"></td>
+                  <td><input class="narrow" data-k="w" data-b="1" data-i="1" type="number" min="0" step="5" value="0"></td>
+                  <td><input class="narrow" data-k="w" data-b="1" data-i="2" type="number" min="0" step="5" value="0"></td>
+                  <td><input class="narrow" data-k="w" data-b="1" data-i="3" type="number" min="0" step="5" value="100"></td>
+                  <td><input class="narrow" data-k="w" data-b="1" data-i="4" type="number" min="0" step="5" value="0"></td>
+                  <td class="sum" data-sum="1">100</td>
+                </tr>
+                <tr>
+                  <th><span class="swatch" style="background:var(--b2)"></span><b>Bucket 2</b></th>
+                  <td><input class="narrow" data-k="w" data-b="2" data-i="0" type="number" min="0" step="5" value="20"></td>
+                  <td><input class="narrow" data-k="w" data-b="2" data-i="1" type="number" min="0" step="5" value="0"></td>
+                  <td><input class="narrow" data-k="w" data-b="2" data-i="2" type="number" min="0" step="5" value="80"></td>
+                  <td><input class="narrow" data-k="w" data-b="2" data-i="3" type="number" min="0" step="5" value="0"></td>
+                  <td><input class="narrow" data-k="w" data-b="2" data-i="4" type="number" min="0" step="5" value="0"></td>
+                  <td class="sum" data-sum="2">100</td>
+                </tr>
+                <tr>
+                  <th><span class="swatch" style="background:var(--b3)"></span><b>Bucket 3</b></th>
+                  <td><input class="narrow" data-k="w" data-b="3" data-i="0" type="number" min="0" step="5" value="0"></td>
+                  <td><input class="narrow" data-k="w" data-b="3" data-i="1" type="number" min="0" step="5" value="80"></td>
+                  <td><input class="narrow" data-k="w" data-b="3" data-i="2" type="number" min="0" step="5" value="20"></td>
+                  <td><input class="narrow" data-k="w" data-b="3" data-i="3" type="number" min="0" step="5" value="0"></td>
+                  <td><input class="narrow" data-k="w" data-b="3" data-i="4" type="number" min="0" step="5" value="0"></td>
+                  <td class="sum" data-sum="3">100</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="warn" id="weightWarn">Each bucket's weights must be non-negative and add up to 100.</p>
+        </fieldset>
 
-        <!-- <div class="rail-actions"> -->
-          <!-- <button class="btn" id="reset" type="button">Reset to defaults</button> -->
-          <!-- <button class="btn" id="csv" type="button">Download CSV</button> -->
-        <!-- </div> -->
-      <!-- </div> -->
-    <!-- </aside> -->
+        <div class="rail-actions">
+          <button class="btn" id="reset" type="button">Reset to defaults</button>
+          <button class="btn" id="csv" type="button">Download CSV</button>
+        </div>
+      </div>
+    </aside>
 
-    ============ RESULTS ============
-    <!-- <main> -->
-      <!-- <h2 class="verdict" id="verdict">&nbsp;</h2> -->
-      <!-- <p class="verdict-note" id="verdictNote"></p> -->
+    <!-- ============ RESULTS ============ -->
+    <main>
+      <h2 class="verdict" id="verdict">&nbsp;</h2>
+      <p class="verdict-note" id="verdictNote"></p>
 
-      <!-- <section class="chart-card"> -->
-        <!-- <div class="chart-head"> -->
-          <!-- <h3>Total corpus at each year end</h3> -->
-          <!-- <span style="color:var(--muted);font-size:12.5px">Actual rupee balances — only spending grows with inflation</span> -->
-        <!-- </div> -->
-        <!-- <svg id="chart" viewBox="0 0 900 380" preserveAspectRatio="xMidYMid meet" role="img" -->
-             <!-- aria-label="Stacked area chart of the corpus by bucket over time"></svg> -->
-        <!-- <div class="legend"> -->
-          <!-- <span><i style="background:var(--ef)"></i>Emergency</span> -->
-          <!-- <span><i style="background:var(--b1)"></i>Bucket 1</span> -->
-          <!-- <span><i style="background:var(--b2)"></i>Bucket 2</span> -->
-          <!-- <span><i style="background:var(--b3)"></i>Bucket 3</span> -->
-        <!-- </div> -->
-        <!-- <div class="tip" id="tip"></div> -->
-      <!-- </section> -->
+      <section class="chart-card">
+        <div class="chart-head">
+          <h3>Total corpus at each year end</h3>
+          <span style="color:var(--muted);font-size:12.5px">Actual rupee balances — only spending grows with inflation</span>
+        </div>
+        <svg id="chart" viewBox="0 0 900 380" preserveAspectRatio="xMidYMid meet" role="img"
+             aria-label="Stacked area chart of the corpus by bucket over time"></svg>
+        <div class="legend">
+          <span><i style="background:var(--ef)"></i>Emergency</span>
+          <span><i style="background:var(--b1)"></i>Bucket 1</span>
+          <span><i style="background:var(--b2)"></i>Bucket 2</span>
+          <span><i style="background:var(--b3)"></i>Bucket 3</span>
+        </div>
+        <div class="tip" id="tip"></div>
+      </section>
 
-      <!-- <div class="cascade" id="cascade"></div> -->
-      <!-- <p class="cascade-note">Money moves right to left once a year: Bucket 3 refills Bucket 2, Bucket 2 refills Bucket 1. Spending leaves Bucket 1 every month. The emergency fund sits outside the chain — it is funded once and left alone.</p> -->
+      <div class="cascade" id="cascade"></div>
+      <p class="cascade-note">Money moves right to left once a year: Bucket 3 refills Bucket 2, Bucket 2 refills Bucket 1. Spending leaves Bucket 1 every month. The emergency fund sits outside the chain — it is funded once and left alone.</p>
 
-      <!-- <div class="table-head"> -->
-        <!-- <h3>Year-end balances</h3> -->
-        <!-- <span style="color:var(--muted);font-size:13px" id="tableNote"></span> -->
-      <!-- </div> -->
-      <!-- <div class="table-wrap"> -->
-        <!-- <table class="years" id="years"> -->
-          <!-- <thead> -->
-            <!-- <tr> -->
-              <!-- <th>Year</th><th>Monthly spend</th><th>Emergency</th><th>Bucket 1</th> -->
-              <!-- <th>Bucket 2</th><th>Bucket 3</th><th>Total corpus</th><th>Tax paid</th> -->
-            <!-- </tr> -->
-          <!-- </thead> -->
-          <!-- <tbody></tbody> -->
-        <!-- </table> -->
-      <!-- </div> -->
+      <div class="table-head">
+        <h3>Year-end balances</h3>
+        <span style="color:var(--muted);font-size:13px" id="tableNote"></span>
+      </div>
+      <div class="table-wrap">
+        <table class="years" id="years">
+          <thead>
+            <tr>
+              <th>Year</th><th>Monthly spend</th><th>Emergency</th><th>Bucket 1</th>
+              <th>Bucket 2</th><th>Bucket 3</th><th>Total corpus</th><th>Tax paid</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
 
-      <!-- <footer> -->
-        <!-- <h3>Important Notes</h3> -->
-		<!-- <h4>What happens each year</h4> -->
-        <!-- <p>Every month Bucket&nbsp;1 redeems enough to hand you that month's spending. All four buckets then compound one month at their weighted gross return. At the year end Bucket&nbsp;2 refills Bucket&nbsp;1 back to its target, and Bucket&nbsp;3 refills Bucket&nbsp;2 back to its target — targets being 18 and 48 months of the coming year's spending, so each year opens fully funded for the year ahead. Nothing refills Bucket&nbsp;3.</p> -->
-        <!-- <p>The emergency fund is funded once at the start and never touched again. It compounds at its own weighted return for the whole tenure and is never redeemed, so no tax is ever charged on it. If Bucket&nbsp;1 empties mid-year the shortfall is pulled early from Bucket&nbsp;2 and then Bucket&nbsp;3 — never from the emergency fund.</p> -->
+      <footer>
+        <h3>Important Notes</h3>
+		<h4>What happens each year</h4>
+        <p>Every month Bucket&nbsp;1 redeems enough to hand you that month's spending. All four buckets then compound one month at their weighted gross return. At the year end Bucket&nbsp;2 refills Bucket&nbsp;1 back to its target, and Bucket&nbsp;3 refills Bucket&nbsp;2 back to its target — targets being 18 and 48 months of the coming year's spending, so each year opens fully funded for the year ahead. Nothing refills Bucket&nbsp;3.</p>
+        <p>The emergency fund is funded once at the start and never touched again. It compounds at its own weighted return for the whole tenure and is never redeemed, so no tax is ever charged on it. If Bucket&nbsp;1 empties mid-year the shortfall is pulled early from Bucket&nbsp;2 and then Bucket&nbsp;3 — never from the emergency fund.</p>
 
-        <!-- <h4>How tax is charged</h4> -->
-        <!-- <p>Tax applies to redemptions, not to paper growth. Each bucket carries a cost basis, and when it redeems, only the gain portion of that redemption is taxed at the bucket's weighted rate. Delivering a given amount of spendable cash therefore means redeeming slightly more than that amount. Early on the gain portion is small and the effective bite is near zero; as unrealised gains build up it climbs toward the bucket's headline rate.</p> -->
-        <!-- <p>Assumption: The opening corpus is assumed to be freshly invested, so it starts with no embedded gains. And hence no taxes as well. If your actual holdings already carry large unrealised gains, real tax in the early years will be higher than shown. <br> Also, if you are re-structuring your existing portfolio to follow this bucket strategy, consider post-tax final amount as the opening corpus for this calculation.</p> -->
+        <h4>How tax is charged</h4>
+        <p>Tax applies to redemptions, not to paper growth. Each bucket carries a cost basis, and when it redeems, only the gain portion of that redemption is taxed at the bucket's weighted rate. Delivering a given amount of spendable cash therefore means redeeming slightly more than that amount. Early on the gain portion is small and the effective bite is near zero; as unrealised gains build up it climbs toward the bucket's headline rate.</p>
+        <p>Assumption: The opening corpus is assumed to be freshly invested, so it starts with no embedded gains. And hence no taxes as well. If your actual holdings already carry large unrealised gains, real tax in the early years will be higher than shown. <br> Also, if you are re-structuring your existing portfolio to follow this bucket strategy, consider post-tax final amount as the opening corpus for this calculation.</p>
 
-        <!-- <h4>Inflation</h4> -->
-        <!-- <p>Inflation applies only to the monthly spends, which increases every year. Because Buckets&nbsp;1 and&nbsp;2 are defined as 18 and 48 months of spending, their refill targets need to follow it up. Balances by-themselves are never inflation-adjusted.</p> -->
+        <h4>Inflation</h4>
+        <p>Inflation applies only to the monthly spends, which increases every year. Because Buckets&nbsp;1 and&nbsp;2 are defined as 18 and 48 months of spending, their refill targets need to follow it up. Balances by-themselves are never inflation-adjusted.</p>
 
-        <!-- <p style="margin-top:14px">It's merely a planning template, no advice provided. <br>Assumption: Returns are assumed to be steady every year; real markets do not provide steady returns. Bucket structure helps mitigate and soften this sequence-of-returns risk.</p> -->
-		<!-- <p style="margin-top:14px">Send feedback and comments to <b>puneetg123@yahoo.com</b></p> -->
-      <!-- </footer> -->
-    <!-- </main> -->
-  <!-- </div> -->
-<!-- </div> -->
+        <p style="margin-top:14px">It's merely a planning template, no advice provided. <br>Assumption: Returns are assumed to be steady every year; real markets do not provide steady returns. Bucket structure helps mitigate and soften this sequence-of-returns risk.</p>
+		<p style="margin-top:14px">Send feedback and comments to <b>puneetg123@yahoo.com</b></p>
+      </footer>
+    </main>
+  </div>
+</div>
 
-<!-- <script> -->
-<!-- const COLORS = ["var(--ef)","var(--b1)","var(--b2)","var(--b3)"]; -->
-<!-- const HEX    = ["#c2833a","#4a9285","#2c6d93","#2a3a6b"]; -->
-<!-- const NAMES  = ["Emergency fund","Bucket 1","Bucket 2","Bucket 3"]; -->
-<!-- const ROLES  = [ -->
-  <!-- "Sealed at the start. Compounds untouched for the whole tenure and is never redeemed.", -->
-  <!-- "Your monthly spending comes out of here. Topped back up from Bucket 2 each year.", -->
-  <!-- "Holds the middle years. Refills Bucket 1, and is topped back up from Bucket 3.", -->
-  <!-- "The growth engine. Refills Bucket 2. Nothing refills it." -->
-<!-- ]; -->
-<!-- const CAP = 120; -->
+<script>
+const COLORS = ["var(--ef)","var(--b1)","var(--b2)","var(--b3)"];
+const HEX    = ["#c2833a","#4a9285","#2c6d93","#2a3a6b"];
+const NAMES  = ["Emergency fund","Bucket 1","Bucket 2","Bucket 3"];
+const ROLES  = [
+  "Sealed at the start. Compounds untouched for the whole tenure and is never redeemed.",
+  "Your monthly spending comes out of here. Topped back up from Bucket 2 each year.",
+  "Holds the middle years. Refills Bucket 1, and is topped back up from Bucket 3.",
+  "The growth engine. Refills Bucket 2. Nothing refills it."
+];
+const CAP = 120;
 
-<!-- const DEFAULTS = { -->
-  <!-- corpus:10000000, expense:100000, inflation:7, horizon:40, -->
-  <!-- mEF:12, mB1:18, mB2:48, -->
-  <!-- ret:[9,10,6,5.5,5], tax:[12,12,20,30,30], -->
-  <!-- w:[[0,0,0,0,100],[0,0,0,100,0],[20,0,80,0,0],[0,80,20,0,0]] -->
-<!-- }; -->
+const DEFAULTS = {
+  corpus:10000000, expense:100000, inflation:7, horizon:40,
+  mEF:12, mB1:18, mB2:48,
+  ret:[9,10,6,5.5,5], tax:[12,12,20,30,30],
+  w:[[0,0,0,0,100],[0,0,0,100,0],[20,0,80,0,0],[0,80,20,0,0]]
+};
 
-<!-- const $  = s => document.querySelector(s); -->
-<!-- const $$ = s => Array.from(document.querySelectorAll(s)); -->
-<!-- const num = el => { const v = parseFloat(el.value); return isFinite(v) ? v : 0; }; -->
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const num = el => { const v = parseFloat(el.value); return isFinite(v) ? v : 0; };
 
-<!-- /* ---------- formatting ---------- */ -->
-<!-- const inr = new Intl.NumberFormat("en-IN",{maximumFractionDigits:0}); -->
-<!-- function money(v){ -->
-  <!-- const s = v < 0 ? "−" : "", a = Math.abs(v); -->
-  <!-- if (a >= 1e7) return s+"₹"+(a/1e7).toFixed(2)+" Cr"; -->
-  <!-- if (a >= 1e5) return s+"₹"+(a/1e5).toFixed(2)+" L"; -->
-  <!-- return s+"₹"+inr.format(Math.round(a)); -->
-<!-- } -->
-<!-- function full(v){ return (v<0?"−":"")+"₹"+inr.format(Math.round(Math.abs(v))); } -->
+/* ---------- formatting ---------- */
+const inr = new Intl.NumberFormat("en-IN",{maximumFractionDigits:0});
+function money(v){
+  const s = v < 0 ? "−" : "", a = Math.abs(v);
+  if (a >= 1e7) return s+"₹"+(a/1e7).toFixed(2)+" Cr";
+  if (a >= 1e5) return s+"₹"+(a/1e5).toFixed(2)+" L";
+  return s+"₹"+inr.format(Math.round(a));
+}
+function full(v){ return (v<0?"−":"")+"₹"+inr.format(Math.round(Math.abs(v))); }
 
-<!-- /* ---------- read inputs ---------- */ -->
-<!-- function readState(){ -->
-  <!-- const s = { -->
-    <!-- corpus: Math.max(0, num($("#corpus"))), -->
-    <!-- expense: Math.max(0, num($("#expense"))), -->
-    <!-- inflation: Math.max(-0.99, num($("#inflation")) / 100), -->
-    <!-- horizon: Math.max(2, Math.min(90, Math.round(num($("#horizon")) || DEFAULTS.horizon))), -->
-    <!-- months: [Math.max(0, num($("#mEF"))), Math.max(0, num($("#mB1"))), Math.max(0, num($("#mB2")))], -->
-    <!-- ret: [0,0,0,0,0], tax: [0,0,0,0,0], -->
-    <!-- w: [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]] -->
-  <!-- }; -->
-  <!-- $$('input[data-k="ret"]').forEach(el => s.ret[+el.dataset.i] = num(el)); -->
-  <!-- $$('input[data-k="tax"]').forEach(el => s.tax[+el.dataset.i] = Math.max(0, num(el))); -->
-  <!-- $$('input[data-k="w"]').forEach(el => s.w[+el.dataset.b][+el.dataset.i] = Math.max(0, num(el))); -->
-  <!-- return s; -->
-<!-- } -->
+/* ---------- read inputs ---------- */
+function readState(){
+  const s = {
+    corpus: Math.max(0, num($("#corpus"))),
+    expense: Math.max(0, num($("#expense"))),
+    inflation: Math.max(-0.99, num($("#inflation")) / 100),
+    horizon: Math.max(2, Math.min(90, Math.round(num($("#horizon")) || DEFAULTS.horizon))),
+    months: [Math.max(0, num($("#mEF"))), Math.max(0, num($("#mB1"))), Math.max(0, num($("#mB2")))],
+    ret: [0,0,0,0,0], tax: [0,0,0,0,0],
+    w: [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]
+  };
+  $$('input[data-k="ret"]').forEach(el => s.ret[+el.dataset.i] = num(el));
+  $$('input[data-k="tax"]').forEach(el => s.tax[+el.dataset.i] = Math.max(0, num(el)));
+  $$('input[data-k="w"]').forEach(el => s.w[+el.dataset.b][+el.dataset.i] = Math.max(0, num(el)));
+  return s;
+}
 
-<!-- /* ---------- a bucket: value, cost basis, gross return, tax rate ---------- */ -->
-<!-- function makeBucket(value, gross, taxRate){ -->
-  <!-- return { v:value, c:value, g:gross, t:taxRate, taxPaid:0 }; -->
-<!-- } -->
-<!-- // share of the current value that is unrealised gain, times the tax rate -->
-<!-- function effRate(b){ -->
-  <!-- if (b.v <= 0) return 0; -->
-  <!-- return b.t * Math.max(0, (b.v - b.c) / b.v); -->
-<!-- } -->
-<!-- // redeem enough to hand over `needNet` of spendable cash; returns what was actually delivered -->
-<!-- function redeem(b, needNet){ -->
-  <!-- if (b.v <= 0 || needNet <= 0) return 0; -->
-  <!-- const e = effRate(b), maxNet = b.v * (1 - e); -->
-  <!-- if (needNet >= maxNet){                        // liquidate the bucket -->
-    <!-- b.taxPaid += b.v - maxNet; -->
-    <!-- b.v = 0; b.c = 0; -->
-    <!-- return maxNet; -->
-  <!-- } -->
-  <!-- const gross = needNet / (1 - e); -->
-  <!-- b.taxPaid += gross * e; -->
-  <!-- const basisReduction = b.v > 0 ? b.c * (gross / b.v) : 0; -->
-  <!-- b.c = Math.max(0, b.c - basisReduction);       // basis comes off proportionally -->
-  <!-- b.v = Math.max(0, b.v - gross); -->
-  <!-- return needNet; -->
-<!-- } -->
-<!-- function deposit(b, amount){ b.v += amount; b.c += amount; }   // arrives as fresh cost basis -->
-<!-- function growOneMonth(b){ b.v *= (b.g > -1) ? Math.pow(1 + b.g, 1/12) : 0; } -->
+/* ---------- a bucket: value, cost basis, gross return, tax rate ---------- */
+function makeBucket(value, gross, taxRate){
+  return { v:value, c:value, g:gross, t:taxRate, taxPaid:0 };
+}
+// share of the current value that is unrealised gain, times the tax rate
+function effRate(b){
+  if (b.v <= 0) return 0;
+  return b.t * Math.max(0, (b.v - b.c) / b.v);
+}
+// redeem enough to hand over `needNet` of spendable cash; returns what was actually delivered
+function redeem(b, needNet){
+  if (b.v <= 0 || needNet <= 0) return 0;
+  const e = effRate(b), maxNet = b.v * (1 - e);
+  if (needNet >= maxNet){                        // liquidate the bucket
+    b.taxPaid += b.v - maxNet;
+    b.v = 0; b.c = 0;
+    return maxNet;
+  }
+  const gross = needNet / (1 - e);
+  b.taxPaid += gross * e;
+  const basisReduction = b.v > 0 ? b.c * (gross / b.v) : 0;
+  b.c = Math.max(0, b.c - basisReduction);       // basis comes off proportionally
+  b.v = Math.max(0, b.v - gross);
+  return needNet;
+}
+function deposit(b, amount){ b.v += amount; b.c += amount; }   // arrives as fresh cost basis
+function growOneMonth(b){ b.v *= (b.g > -1) ? Math.pow(1 + b.g, 1/12) : 0; }
 
-<!-- /* ---------- the model ---------- */ -->
-<!-- function simulate(s){ -->
-  <!-- const stats = s.w.map(row => { -->
-    <!-- const tot   = row.reduce((a,b)=>a+b,0) || 1; -->
-    <!-- const gross = row.reduce((a,w,i)=>a + w*s.ret[i], 0) / tot / 100; -->
-    <!-- const taxw  = row.reduce((a,w,i)=>a + w*s.tax[i], 0) / tot / 100; -->
-    <!-- return { gross, taxw }; -->
-  <!-- }); -->
+/* ---------- the model ---------- */
+function simulate(s){
+  const stats = s.w.map(row => {
+    const tot   = row.reduce((a,b)=>a+b,0) || 1;
+    const gross = row.reduce((a,w,i)=>a + w*s.ret[i], 0) / tot / 100;
+    const taxw  = row.reduce((a,w,i)=>a + w*s.tax[i], 0) / tot / 100;
+    return { gross, taxw };
+  });
 
-  <!-- let rem = Math.max(0, s.corpus); -->
-  <!-- const open = []; -->
-  <!-- for (let i = 0; i < 3; i++){ -->
-    <!-- const alloc = Math.min(rem, s.months[i] * s.expense); -->
-    <!-- open.push(alloc); -->
-    <!-- rem -= alloc; -->
-  <!-- } -->
-  <!-- open.push(rem); // Bucket 3 receives the genuine remaining corpus -->
-  <!-- const bk = open.map((v,i)=> makeBucket(v, stats[i].gross, stats[i].taxw)); -->
+  let rem = Math.max(0, s.corpus);
+  const open = [];
+  for (let i = 0; i < 3; i++){
+    const alloc = Math.min(rem, s.months[i] * s.expense);
+    open.push(alloc);
+    rem -= alloc;
+  }
+  open.push(rem); // Bucket 3 receives the genuine remaining corpus
+  const bk = open.map((v,i)=> makeBucket(v, stats[i].gross, stats[i].taxw));
 
-  <!-- const snapshot = (year, monthly, taxThisYear, shortfall) => ({ -->
-    <!-- year, monthly, bal: bk.map(b=>b.v), -->
-    <!-- total: bk.reduce((a,b)=>a+b.v,0), tax:taxThisYear, shortfall -->
-  <!-- }); -->
+  const snapshot = (year, monthly, taxThisYear, shortfall) => ({
+    year, monthly, bal: bk.map(b=>b.v),
+    total: bk.reduce((a,b)=>a+b.v,0), tax:taxThisYear, shortfall
+  });
 
-  <!-- const rows = [snapshot(0, s.expense, 0, 0)]; -->
-  <!-- let taxSoFar = 0; -->
+  const rows = [snapshot(0, s.expense, 0, 0)];
+  let taxSoFar = 0;
 
-  <!-- for (let y = 1; y <= CAP; y++){ -->
-    <!-- const monthly = s.expense * Math.pow(1 + s.inflation, y-1); -->
-    <!-- let shortfall = 0; -->
+  for (let y = 1; y <= CAP; y++){
+    const monthly = s.expense * Math.pow(1 + s.inflation, y-1);
+    let shortfall = 0;
 
-    <!-- for (let m = 0; m < 12; m++){ -->
-      <!-- let need = monthly; -->
-      <!-- for (const i of [1,2,3]){                  // Bucket 1 first; 2 and 3 only if it is dry -->
-        <!-- need -= redeem(bk[i], need); -->
-        <!-- if (need <= 0.5) break; -->
-      <!-- } -->
-      <!-- shortfall += Math.max(need, 0); -->
-      <!-- bk.forEach(growOneMonth);                  // the emergency fund grows too, untouched -->
-    <!-- } -->
+    for (let m = 0; m < 12; m++){
+      let need = monthly;
+      for (const i of [1,2,3]){                  // Bucket 1 first; 2 and 3 only if it is dry
+        need -= redeem(bk[i], need);
+        if (need <= 0.5) break;
+      }
+      shortfall += Math.max(need, 0);
+      bk.forEach(growOneMonth);                  // the emergency fund grows too, untouched
+    }
 
-    <!-- // year-end refills, sized on the coming year's spending (Bucket 3 refills Bucket 2, Bucket 2 refills Bucket 1) -->
-    <!-- const next = s.expense * Math.pow(1 + s.inflation, y); -->
-    <!-- const gap1 = Math.max(0, s.months[1] * next - bk[1].v); -->
-    <!-- const needFromB3 = Math.max(0, s.months[2] * next + gap1 - bk[2].v); -->
-    <!-- if (needFromB3 > 0) deposit(bk[2], redeem(bk[3], needFromB3)); -->
-    <!-- if (gap1 > 0) deposit(bk[1], redeem(bk[2], gap1)); -->
+    // year-end refills, sized on the coming year's spending (Bucket 3 refills Bucket 2, Bucket 2 refills Bucket 1)
+    const next = s.expense * Math.pow(1 + s.inflation, y);
+    const gap1 = Math.max(0, s.months[1] * next - bk[1].v);
+    const needFromB3 = Math.max(0, s.months[2] * next + gap1 - bk[2].v);
+    if (needFromB3 > 0) deposit(bk[2], redeem(bk[3], needFromB3));
+    if (gap1 > 0) deposit(bk[1], redeem(bk[2], gap1));
 
-    <!-- const taxTotal = bk.reduce((a,b)=>a+b.taxPaid,0); -->
-    <!-- rows.push(snapshot(y, monthly, taxTotal - taxSoFar, shortfall)); -->
-    <!-- taxSoFar = taxTotal; -->
-    <!-- if (shortfall > 0.5) break; -->
-  <!-- } -->
+    const taxTotal = bk.reduce((a,b)=>a+b.taxPaid,0);
+    rows.push(snapshot(y, monthly, taxTotal - taxSoFar, shortfall));
+    taxSoFar = taxTotal;
+    if (shortfall > 0.5) break;
+  }
 
-  <!-- const last = rows[rows.length-1]; -->
-  <!-- return { rows, stats, failYear: last.shortfall > 0.5 ? last.year : null }; -->
-<!-- } -->
+  const last = rows[rows.length-1];
+  return { rows, stats, failYear: last.shortfall > 0.5 ? last.year : null };
+}
 
-<!-- /* ---------- verdict ---------- */ -->
-<!-- function renderVerdict(res, s, view){ -->
-  <!-- const v = $("#verdict"), n = $("#verdictNote"), fy = res.failYear; -->
+/* ---------- verdict ---------- */
+function renderVerdict(res, s, view){
+  const v = $("#verdict"), n = $("#verdictNote"), fy = res.failYear;
 
-  <!-- if (fy && fy <= s.horizon){ -->
-    <!-- v.classList.add("short"); -->
-    <!-- v.innerHTML = `Spending runs out in <em>year ${fy}</em>.`; -->
-    <!-- const row = res.rows[res.rows.length-1]; -->
-    <!-- n.textContent = `Buckets 1, 2 and 3 are all empty by then, against spending of ${money(row.monthly)} a month. ` -->
-      <!-- + (row.bal[0] > 0.5 -->
-          <!-- ? `The emergency fund still holds ${money(row.bal[0])}, ring-fenced by design and not counted as available.` -->
-          <!-- : `No emergency fund was configured.`); -->
-    <!-- return; -->
-  <!-- } -->
+  if (fy && fy <= s.horizon){
+    v.classList.add("short");
+    v.innerHTML = `Spending runs out in <em>year ${fy}</em>.`;
+    const row = res.rows[res.rows.length-1];
+    n.textContent = `Buckets 1, 2 and 3 are all empty by then, against spending of ${money(row.monthly)} a month. `
+      + (row.bal[0] > 0.5
+          ? `The emergency fund still holds ${money(row.bal[0])}, ring-fenced by design and not counted as available.`
+          : `No emergency fund was configured.`);
+    return;
+  }
 
-  <!-- v.classList.remove("short"); -->
-  <!-- const last = view[view.length-1]; -->
-  <!-- v.innerHTML = fy -->
-    <!-- ? `The plan clears <em>${s.horizon} years</em>, and spending fails in year ${fy}.` -->
-    <!-- : `The plan clears all <em>${s.horizon} years</em> with room to spare.`; -->
-  <!-- const dir = last.total < view[0].total ? "down from" : "up from"; -->
-  <!-- n.textContent = `By year ${last.year} the corpus stands at ${money(last.total)}, ${dir} ${money(view[0].total)} at the start, ` -->
-    <!-- + `with monthly spending grown to ${money(last.monthly)}.` -->
-    <!-- + (fy ? "" : ` Nothing on this path exhausts it inside ${CAP} years.`); -->
-<!-- } -->
+  v.classList.remove("short");
+  const last = view[view.length-1];
+  v.innerHTML = fy
+    ? `The plan clears <em>${s.horizon} years</em>, and spending fails in year ${fy}.`
+    : `The plan clears all <em>${s.horizon} years</em> with room to spare.`;
+  const dir = last.total < view[0].total ? "down from" : "up from";
+  n.textContent = `By year ${last.year} the corpus stands at ${money(last.total)}, ${dir} ${money(view[0].total)} at the start, `
+    + `with monthly spending grown to ${money(last.monthly)}.`
+    + (fy ? "" : ` Nothing on this path exhausts it inside ${CAP} years.`);
+}
 
-<!-- /* ---------- bucket cards ---------- */ -->
-<!-- function renderCascade(res, view){ -->
-  <!-- const open = view[0]; -->
-  <!-- $("#cascade").innerHTML = res.stats.map((st,i)=>` -->
-    <!-- <div class="bucket" style="--c:${COLORS[i]}"> -->
-      <!-- <h4>${NAMES[i]}</h4> -->
-      <!-- <p class="role">${ROLES[i]}</p> -->
-      <!-- <div class="val num">${money(open.bal[i])}</div> -->
-      <!-- <div class="meta">${(st.gross*100).toFixed(2)}% gross return<br>${ -->
-        <!-- i === 0 ? "never redeemed, so untaxed" -->
-                <!-- : `${(st.taxw*100).toFixed(1)}% on gains at redemption`}</div> -->
-    <!-- </div>`).join(""); -->
-<!-- } -->
+/* ---------- bucket cards ---------- */
+function renderCascade(res, view){
+  const open = view[0];
+  $("#cascade").innerHTML = res.stats.map((st,i)=>`
+    <div class="bucket" style="--c:${COLORS[i]}">
+      <h4>${NAMES[i]}</h4>
+      <p class="role">${ROLES[i]}</p>
+      <div class="val num">${money(open.bal[i])}</div>
+      <div class="meta">${(st.gross*100).toFixed(2)}% gross return<br>${
+        i === 0 ? "never redeemed, so untaxed"
+                : `${(st.taxw*100).toFixed(1)}% on gains at redemption`}</div>
+    </div>`).join("");
+}
 
-<!-- /* ---------- table ---------- */ -->
-<!-- function renderTable(res, s, view){ -->
-  <!-- $("#years").tBodies[0].innerHTML = view.map(r=>` -->
-    <!-- <tr class="${res.failYear === r.year ? "dry":""}"> -->
-      <!-- <th scope="row">${r.year === 0 ? "Start" : r.year}</th> -->
-      <!-- <td>${full(r.monthly)}</td> -->
-      <!-- ${r.bal.map(v=>`<td>${full(v)}</td>`).join("")} -->
-      <!-- <td>${full(r.total)}</td> -->
-      <!-- <td>${r.year === 0 ? "—" : full(r.tax)}</td> -->
-    <!-- </tr>`).join(""); -->
+/* ---------- table ---------- */
+function renderTable(res, s, view){
+  $("#years").tBodies[0].innerHTML = view.map(r=>`
+    <tr class="${res.failYear === r.year ? "dry":""}">
+      <th scope="row">${r.year === 0 ? "Start" : r.year}</th>
+      <td>${full(r.monthly)}</td>
+      ${r.bal.map(v=>`<td>${full(v)}</td>`).join("")}
+      <td>${full(r.total)}</td>
+      <td>${r.year === 0 ? "—" : full(r.tax)}</td>
+    </tr>`).join("");
 
-  <!-- const fy = res.failYear; -->
-  <!-- $("#tableNote").textContent = (fy && fy <= s.horizon) -->
-    <!-- ? `Year ${fy} is the year spending can no longer be funded — it falls short by ${money(res.rows[res.rows.length-1].shortfall)}.` -->
-    <!-- : `Tax is the amount paid on that year's redemptions.`; -->
-<!-- } -->
+  const fy = res.failYear;
+  $("#tableNote").textContent = (fy && fy <= s.horizon)
+    ? `Year ${fy} is the year spending can no longer be funded — it falls short by ${money(res.rows[res.rows.length-1].shortfall)}.`
+    : `Tax is the amount paid on that year's redemptions.`;
+}
 
-<!-- /* ---------- chart ---------- */ -->
-<!-- const PAD = { t:16, r:14, b:30, l:66 }; -->
-<!-- let chartHit = []; -->
+/* ---------- chart ---------- */
+const PAD = { t:16, r:14, b:30, l:66 };
+let chartHit = [];
 
-<!-- function renderChart(res, s, view){ -->
-  <!-- const svg = $("#chart"), W = 900, H = 380; -->
-  <!-- const n = view.length; -->
-  <!-- const iw = W - PAD.l - PAD.r, ih = H - PAD.t - PAD.b; -->
+function renderChart(res, s, view){
+  const svg = $("#chart"), W = 900, H = 380;
+  const n = view.length;
+  const iw = W - PAD.l - PAD.r, ih = H - PAD.t - PAD.b;
 
-  <!-- const maxTotal = Math.max(...view.map(r => r.total), 1); -->
-  <!-- const step = niceStep(maxTotal / 4); -->
-  <!-- const yMax = Math.ceil(maxTotal / step) * step; -->
+  const maxTotal = Math.max(...view.map(r => r.total), 1);
+  const step = niceStep(maxTotal / 4);
+  const yMax = Math.ceil(maxTotal / step) * step;
 
-  <!-- const X = i => PAD.l + (n === 1 ? 0 : i * iw / (n - 1)); -->
-  <!-- const Y = v => PAD.t + ih - (v / yMax) * ih; -->
-  <!-- const stack = view.map(r => { let acc = 0; return r.bal.map(v => (acc += Math.max(v,0))); }); -->
+  const X = i => PAD.l + (n === 1 ? 0 : i * iw / (n - 1));
+  const Y = v => PAD.t + ih - (v / yMax) * ih;
+  const stack = view.map(r => { let acc = 0; return r.bal.map(v => (acc += Math.max(v,0))); });
 
-  <!-- let out = ""; -->
-  <!-- for (let g = 0; g <= yMax + 1e-6; g += step){ -->
-    <!-- out += `<line x1="${PAD.l}" y1="${Y(g).toFixed(1)}" x2="${W-PAD.r}" y2="${Y(g).toFixed(1)}" stroke="#e3e9e6"/>`; -->
-    <!-- out += `<text x="${PAD.l-9}" y="${(Y(g)+4).toFixed(1)}" text-anchor="end" font-size="11" fill="#5f726f">${money(g).replace("₹","")}</text>`; -->
-  <!-- } -->
-  <!-- for (let bkt = 3; bkt >= 0; bkt--){ -->
-    <!-- const top = view.map((_,i)=>`${X(i).toFixed(1)},${Y(stack[i][bkt]).toFixed(1)}`); -->
-    <!-- const base = bkt === 0 -->
-      <!-- ? [`${X(n-1).toFixed(1)},${Y(0).toFixed(1)}`, `${X(0).toFixed(1)},${Y(0).toFixed(1)}`] -->
-      <!-- : view.map((_,i)=>`${X(n-1-i).toFixed(1)},${Y(stack[n-1-i][bkt-1]).toFixed(1)}`); -->
-    <!-- out += `<polygon points="${top.concat(base).join(" ")}" fill="${HEX[bkt]}" fill-opacity="${bkt===3?0.9:1}"/>`; -->
-  <!-- } -->
-  <!-- const tick = n > 48 ? 10 : n > 24 ? 5 : n > 12 ? 2 : 1; -->
-  <!-- view.forEach((r,i)=>{ -->
-    <!-- const isLast = (i === n - 1); -->
-    <!-- const onTick = (r.year === 0 || r.year % tick === 0); -->
-    <!-- if (onTick || (isLast && r.year % tick > tick * 0.35)) -->
-      <!-- out += `<text x="${X(i).toFixed(1)}" y="${H-10}" text-anchor="middle" font-size="11" fill="#5f726f">${r.year}</text>`; -->
-  <!-- }); -->
-  <!-- if (res.failYear && res.failYear <= s.horizon){ -->
-    <!-- const i = view.findIndex(r => r.year === res.failYear); -->
-    <!-- if (i >= 0){ -->
-      <!-- const xLine = X(i); -->
-      <!-- out += `<line x1="${xLine.toFixed(1)}" y1="${PAD.t}" x2="${xLine.toFixed(1)}" y2="${PAD.t+ih}" stroke="#a63328" stroke-width="1.5" stroke-dasharray="4 3"/>`; -->
-      <!-- const anchor = xLine > (PAD.l + iw * 0.65) ? "end" : "start"; -->
-      <!-- const textX = xLine + (anchor === "end" ? -7 : 7); -->
-      <!-- out += `<text x="${textX.toFixed(1)}" y="${PAD.t+13}" text-anchor="${anchor}" font-size="12" font-weight="600" fill="#a63328">Spending unfunded</text>`; -->
-    <!-- } -->
-  <!-- } -->
-  <!-- out += `<line x1="${PAD.l}" y1="${PAD.t+ih}" x2="${W-PAD.r}" y2="${PAD.t+ih}" stroke="#16262c" stroke-width="1"/>`; -->
-  <!-- out += `<line class="guide" x1="0" y1="${PAD.t}" x2="0" y2="${PAD.t+ih}" stroke="#16262c" stroke-width="1" opacity="0"/>`; -->
-  <!-- svg.innerHTML = out; -->
+  let out = "";
+  for (let g = 0; g <= yMax + 1e-6; g += step){
+    out += `<line x1="${PAD.l}" y1="${Y(g).toFixed(1)}" x2="${W-PAD.r}" y2="${Y(g).toFixed(1)}" stroke="#e3e9e6"/>`;
+    out += `<text x="${PAD.l-9}" y="${(Y(g)+4).toFixed(1)}" text-anchor="end" font-size="11" fill="#5f726f">${money(g).replace("₹","")}</text>`;
+  }
+  for (let bkt = 3; bkt >= 0; bkt--){
+    const top = view.map((_,i)=>`${X(i).toFixed(1)},${Y(stack[i][bkt]).toFixed(1)}`);
+    const base = bkt === 0
+      ? [`${X(n-1).toFixed(1)},${Y(0).toFixed(1)}`, `${X(0).toFixed(1)},${Y(0).toFixed(1)}`]
+      : view.map((_,i)=>`${X(n-1-i).toFixed(1)},${Y(stack[n-1-i][bkt-1]).toFixed(1)}`);
+    out += `<polygon points="${top.concat(base).join(" ")}" fill="${HEX[bkt]}" fill-opacity="${bkt===3?0.9:1}"/>`;
+  }
+  const tick = n > 48 ? 10 : n > 24 ? 5 : n > 12 ? 2 : 1;
+  view.forEach((r,i)=>{
+    const isLast = (i === n - 1);
+    const onTick = (r.year === 0 || r.year % tick === 0);
+    if (onTick || (isLast && r.year % tick > tick * 0.35))
+      out += `<text x="${X(i).toFixed(1)}" y="${H-10}" text-anchor="middle" font-size="11" fill="#5f726f">${r.year}</text>`;
+  });
+  if (res.failYear && res.failYear <= s.horizon){
+    const i = view.findIndex(r => r.year === res.failYear);
+    if (i >= 0){
+      const xLine = X(i);
+      out += `<line x1="${xLine.toFixed(1)}" y1="${PAD.t}" x2="${xLine.toFixed(1)}" y2="${PAD.t+ih}" stroke="#a63328" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+      const anchor = xLine > (PAD.l + iw * 0.65) ? "end" : "start";
+      const textX = xLine + (anchor === "end" ? -7 : 7);
+      out += `<text x="${textX.toFixed(1)}" y="${PAD.t+13}" text-anchor="${anchor}" font-size="12" font-weight="600" fill="#a63328">Spending unfunded</text>`;
+    }
+  }
+  out += `<line x1="${PAD.l}" y1="${PAD.t+ih}" x2="${W-PAD.r}" y2="${PAD.t+ih}" stroke="#16262c" stroke-width="1"/>`;
+  out += `<line class="guide" x1="0" y1="${PAD.t}" x2="0" y2="${PAD.t+ih}" stroke="#16262c" stroke-width="1" opacity="0"/>`;
+  svg.innerHTML = out;
 
-  <!-- chartHit = view.map((r,i)=>({ x:X(i), r })); -->
-<!-- } -->
+  chartHit = view.map((r,i)=>({ x:X(i), r }));
+}
 
-<!-- function niceStep(raw){ -->
-  <!-- const p = Math.pow(10, Math.floor(Math.log10(raw||1))); -->
-  <!-- const m = (raw||1)/p; -->
-  <!-- return (m<=1?1:m<=2?2:m<=2.5?2.5:m<=5?5:10) * p; -->
-<!-- } -->
+function niceStep(raw){
+  const p = Math.pow(10, Math.floor(Math.log10(raw||1)));
+  const m = (raw||1)/p;
+  return (m<=1?1:m<=2?2:m<=2.5?2.5:m<=5?5:10) * p;
+}
 
-<!-- (function(){ -->
-  <!-- const svg = $("#chart"), tip = $("#tip"); -->
-  <!-- function move(ev){ -->
-    <!-- if (!chartHit.length) return; -->
-    <!-- const box = svg.getBoundingClientRect(); -->
-    <!-- const px = ((ev.touches ? ev.touches[0].clientX : ev.clientX) - box.left) / box.width * 900; -->
-    <!-- let best = chartHit[0]; -->
-    <!-- for (const h of chartHit) if (Math.abs(h.x-px) < Math.abs(best.x-px)) best = h; -->
-    <!-- const guide = svg.querySelector(".guide"); -->
-    <!-- if (guide){ guide.setAttribute("x1",best.x); guide.setAttribute("x2",best.x); guide.setAttribute("opacity","0.35"); } -->
-    <!-- tip.innerHTML = `<b>${best.r.year === 0 ? "Opening split" : "Year "+best.r.year}</b> · spending ${money(best.r.monthly)}/mo` -->
-      <!-- + best.r.bal.map((v,i)=>`<div class="row"><span><i style="background:${HEX[i]}"></i>${NAMES[i]}</span><span>${money(v)}</span></div>`).join("") -->
-      <!-- + `<div class="row" style="border-top:1px solid rgba(255,255,255,.25);margin-top:4px;padding-top:4px"><span>Total corpus</span><span>${money(best.r.total)}</span></div>`; -->
-    <!-- tip.classList.add("on"); -->
-    <!-- const left = best.x / 900 * box.width; -->
-    <!-- tip.style.left = Math.min(Math.max(left + 14, 8), box.width - tip.offsetWidth - 8) + "px"; -->
-    <!-- tip.style.top = "34px"; -->
-  <!-- } -->
-  <!-- svg.addEventListener("mousemove", move); -->
-  <!-- svg.addEventListener("touchmove", move, {passive:true}); -->
-  <!-- const hideTip = () => { -->
-    <!-- tip.classList.remove("on"); -->
-    <!-- const g = svg.querySelector(".guide"); if (g) g.setAttribute("opacity","0"); -->
-  <!-- }; -->
-  <!-- svg.addEventListener("mouseleave", hideTip); -->
-  <!-- svg.addEventListener("touchend", hideTip, {passive:true}); -->
-  <!-- svg.addEventListener("touchcancel", hideTip, {passive:true}); -->
-<!-- })(); -->
+(function(){
+  const svg = $("#chart"), tip = $("#tip");
+  function move(ev){
+    if (!chartHit.length) return;
+    const box = svg.getBoundingClientRect();
+    const px = ((ev.touches ? ev.touches[0].clientX : ev.clientX) - box.left) / box.width * 900;
+    let best = chartHit[0];
+    for (const h of chartHit) if (Math.abs(h.x-px) < Math.abs(best.x-px)) best = h;
+    const guide = svg.querySelector(".guide");
+    if (guide){ guide.setAttribute("x1",best.x); guide.setAttribute("x2",best.x); guide.setAttribute("opacity","0.35"); }
+    tip.innerHTML = `<b>${best.r.year === 0 ? "Opening split" : "Year "+best.r.year}</b> · spending ${money(best.r.monthly)}/mo`
+      + best.r.bal.map((v,i)=>`<div class="row"><span><i style="background:${HEX[i]}"></i>${NAMES[i]}</span><span>${money(v)}</span></div>`).join("")
+      + `<div class="row" style="border-top:1px solid rgba(255,255,255,.25);margin-top:4px;padding-top:4px"><span>Total corpus</span><span>${money(best.r.total)}</span></div>`;
+    tip.classList.add("on");
+    const left = best.x / 900 * box.width;
+    tip.style.left = Math.min(Math.max(left + 14, 8), box.width - tip.offsetWidth - 8) + "px";
+    tip.style.top = "34px";
+  }
+  svg.addEventListener("mousemove", move);
+  svg.addEventListener("touchmove", move, {passive:true});
+  const hideTip = () => {
+    tip.classList.remove("on");
+    const g = svg.querySelector(".guide"); if (g) g.setAttribute("opacity","0");
+  };
+  svg.addEventListener("mouseleave", hideTip);
+  svg.addEventListener("touchend", hideTip, {passive:true});
+  svg.addEventListener("touchcancel", hideTip, {passive:true});
+})();
 
-<!-- /* ---------- validation ---------- */ -->
-<!-- function validate(s){ -->
-  <!-- let bad = false; -->
-  <!-- s.w.forEach((row,b)=>{ -->
-    <!-- const sum  = row.reduce((a,c)=>a+c,0); -->
-    <!-- const cell = document.querySelector(`[data-sum="${b}"]`); -->
-    <!-- cell.textContent = Math.round(sum); -->
-    <!-- const off = Math.abs(sum - 100) > 0.01 || row.some(w => w < 0); -->
-    <!-- cell.classList.toggle("off", off); -->
-    <!-- if (off) bad = true; -->
-  <!-- }); -->
-  <!-- $("#weightWarn").style.display = bad ? "block" : "none"; -->
-  <!-- const spare = s.corpus - (s.months[0]+s.months[1]+s.months[2]) * s.expense; -->
-  <!-- $("#sizeWarn").style.display = spare < 0 ? "block" : "none"; -->
-<!-- } -->
+/* ---------- validation ---------- */
+function validate(s){
+  let bad = false;
+  s.w.forEach((row,b)=>{
+    const sum  = row.reduce((a,c)=>a+c,0);
+    const cell = document.querySelector(`[data-sum="${b}"]`);
+    cell.textContent = Math.round(sum);
+    const off = Math.abs(sum - 100) > 0.01 || row.some(w => w < 0);
+    cell.classList.toggle("off", off);
+    if (off) bad = true;
+  });
+  $("#weightWarn").style.display = bad ? "block" : "none";
+  const spare = s.corpus - (s.months[0]+s.months[1]+s.months[2]) * s.expense;
+  $("#sizeWarn").style.display = spare < 0 ? "block" : "none";
+}
 
-<!-- /* ---------- run ---------- */ -->
-<!-- let last = null; -->
-<!-- function run(){ -->
-  <!-- const s = readState(); -->
-  <!-- validate(s); -->
-  <!-- const res  = simulate(s); -->
-  <!-- const view = res.rows.filter(r => r.year <= s.horizon); -->
-  <!-- last = { s, res, view }; -->
-  <!-- renderVerdict(res, s, view); -->
-  <!-- renderChart(res, s, view); -->
-  <!-- renderCascade(res, view); -->
-  <!-- renderTable(res, s, view); -->
-<!-- } -->
+/* ---------- run ---------- */
+let last = null;
+function run(){
+  const s = readState();
+  validate(s);
+  const res  = simulate(s);
+  const view = res.rows.filter(r => r.year <= s.horizon);
+  last = { s, res, view };
+  renderVerdict(res, s, view);
+  renderChart(res, s, view);
+  renderCascade(res, view);
+  renderTable(res, s, view);
+}
 
-<!-- document.addEventListener("input", e => { if (e.target.matches("input")) run(); }); -->
-<!-- window.addEventListener("resize", () => renderChart(last.res, last.s, last.view)); -->
+document.addEventListener("input", e => { if (e.target.matches("input")) run(); });
+window.addEventListener("resize", () => renderChart(last.res, last.s, last.view));
 
-<!-- $("#reset").addEventListener("click", ()=>{ -->
-  <!-- ["corpus","expense","inflation","horizon"].forEach(k => $("#"+k).value = DEFAULTS[k]); -->
-  <!-- $("#mEF").value = DEFAULTS.mEF; $("#mB1").value = DEFAULTS.mB1; $("#mB2").value = DEFAULTS.mB2; -->
-  <!-- $$('input[data-k="ret"]').forEach(el => el.value = DEFAULTS.ret[+el.dataset.i]); -->
-  <!-- $$('input[data-k="tax"]').forEach(el => el.value = DEFAULTS.tax[+el.dataset.i]); -->
-  <!-- $$('input[data-k="w"]').forEach(el => el.value = DEFAULTS.w[+el.dataset.b][+el.dataset.i]); -->
-  <!-- run(); -->
-<!-- }); -->
+$("#reset").addEventListener("click", ()=>{
+  ["corpus","expense","inflation","horizon"].forEach(k => $("#"+k).value = DEFAULTS[k]);
+  $("#mEF").value = DEFAULTS.mEF; $("#mB1").value = DEFAULTS.mB1; $("#mB2").value = DEFAULTS.mB2;
+  $$('input[data-k="ret"]').forEach(el => el.value = DEFAULTS.ret[+el.dataset.i]);
+  $$('input[data-k="tax"]').forEach(el => el.value = DEFAULTS.tax[+el.dataset.i]);
+  $$('input[data-k="w"]').forEach(el => el.value = DEFAULTS.w[+el.dataset.b][+el.dataset.i]);
+  run();
+});
 
-<!-- $("#csv").addEventListener("click", ()=>{ -->
-  <!-- const head = "Year,Monthly expense,Emergency fund,Bucket 1,Bucket 2,Bucket 3,Total corpus,Tax paid\n"; -->
-  <!-- const body = last.view.map(r => -->
-    <!-- [r.year, Math.round(r.monthly), ...r.bal.map(Math.round), Math.round(r.total), Math.round(r.tax)].join(",") -->
-  <!-- ).join("\n"); -->
-  <!-- const url = URL.createObjectURL(new Blob([head+body], {type:"text/csv"})); -->
-  <!-- const a = document.createElement("a"); -->
-  <!-- a.href = url; a.download = "three-bucket-burndown.csv"; -->
-  <!-- document.body.appendChild(a); a.click(); a.remove(); -->
-  <!-- setTimeout(()=>URL.revokeObjectURL(url), 1000); -->
-<!-- }); -->
+$("#csv").addEventListener("click", ()=>{
+  const head = "Year,Monthly expense,Emergency fund,Bucket 1,Bucket 2,Bucket 3,Total corpus,Tax paid\n";
+  const body = last.view.map(r =>
+    [r.year, Math.round(r.monthly), ...r.bal.map(Math.round), Math.round(r.total), Math.round(r.tax)].join(",")
+  ).join("\n");
+  const url = URL.createObjectURL(new Blob([head+body], {type:"text/csv"}));
+  const a = document.createElement("a");
+  a.href = url; a.download = "three-bucket-burndown.csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+});
 
-<!-- run(); -->
-<!-- </script> -->
-<!-- </body> -->
-<!-- </html> -->
+run();
+</script>
+</body>
+</html>
