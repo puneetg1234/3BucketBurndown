@@ -214,8 +214,8 @@ footer h4+h4{margin-top:14px}
               <tbody>
                 <tr>
                   <th><b>Return %</b><br>pre-tax</th>
-                  <td><input class="narrow" data-k="ret" data-i="0" type="number" step="0.1" value="9"></td>
-                  <td><input class="narrow" data-k="ret" data-i="1" type="number" step="0.1" value="10"></td>
+                  <td><input class="narrow" data-k="ret" data-i="0" type="number" step="0.1" value="10"></td>
+                  <td><input class="narrow" data-k="ret" data-i="1" type="number" step="0.1" value="11"></td>
                   <td><input class="narrow" data-k="ret" data-i="2" type="number" step="0.1" value="6"></td>
                   <td><input class="narrow" data-k="ret" data-i="3" type="number" step="0.1" value="5.5"></td>
                   <td><input class="narrow" data-k="ret" data-i="4" type="number" step="0.1" value="5"></td>
@@ -223,11 +223,11 @@ footer h4+h4{margin-top:14px}
                 </tr>
                 <tr>
                   <th><b>Tax %</b><br>assumes long-term</th>
-                  <td><input class="narrow" data-k="tax" data-i="0" type="number" step="1" value="12"></td>
-                  <td><input class="narrow" data-k="tax" data-i="1" type="number" step="1" value="12"></td>
-                  <td><input class="narrow" data-k="tax" data-i="2" type="number" step="1" value="20"></td>
+                  <td><input class="narrow" data-k="tax" data-i="0" type="number" step="1" value="12.5"></td>
+                  <td><input class="narrow" data-k="tax" data-i="1" type="number" step="1" value="12.5"></td>
+                  <td><input class="narrow" data-k="tax" data-i="2" type="number" step="1" value="30"></td>
                   <td><input class="narrow" data-k="tax" data-i="3" type="number" step="1" value="30"></td>
-                  <td><input class="narrow" data-k="tax" data-i="4" type="number" step="1" value="30"></td>
+                  <td><input class="narrow" data-k="tax" data-i="4" type="number" step="1" value="20"></td>
                   <td></td>
                 </tr>
                 <tr class="sep">
@@ -354,7 +354,7 @@ const CAP = 120;
 const DEFAULTS = {
   corpus:10000000, expense:100000, inflation:7, horizon:40,
   mEF:12, mB1:18, mB2:48,
-  ret:[9,10,6,5.5,5], tax:[12,12,20,30,30],
+  ret:[10,11,6,5.5,5], tax:[12.5,12.5,30,30,20],
   w:[[0,0,0,0,100],[0,0,0,100,0],[20,0,80,0,0],[0,80,20,0,0]]
 };
 
