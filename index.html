@@ -312,8 +312,8 @@ footer h4+h4{margin-top:14px}
         <table class="years" id="years">
           <thead>
             <tr>
-              <th>Year</th><th>Monthly spend</th><th>Emergency<br>sealed</th><th>Bucket 1</th>
-              <th>Bucket 2</th><th>Bucket 3</th><th>Spendable<br>B1+B2+B3</th><th>Total<br>incl. fund</th><th>Tax paid</th>
+              <th>Year</th><th>Monthly spend</th><th>Emergency<br>fund</th><th>Bucket 1</th>
+              <th>Bucket 2</th><th>Bucket 3</th><th>Spendable<br>B1+B2+B3</th><th>Total<br>incl. emergency fund</th><th>Tax paid</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -736,7 +736,7 @@ $("#reset").addEventListener("click", ()=>{
 });
 
 $("#csv").addEventListener("click", ()=>{
-  const head = "Year,Monthly expense,Emergency fund (sealed),Bucket 1,Bucket 2,Bucket 3,Spendable (B1+B2+B3),Total incl. fund,Tax paid\n";
+  const head = "Year,Monthly expense,Emergency fund (sealed),Bucket 1,Bucket 2,Bucket 3,Spendable (B1+B2+B3),Total incl. emergency fund,Tax paid\n";
   const body = lastRun.view.map(r => {
     const c = r.bal.map(Math.round), spendable = c[1] + c[2] + c[3];
     return [r.year, Math.round(r.monthly), ...c, spendable, c[0] + spendable, Math.round(r.tax)].join(",");
