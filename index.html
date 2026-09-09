@@ -52,6 +52,7 @@ body{
 .rail .hint{color:var(--muted);font-size:13px;margin:0 0 18px}
 
 fieldset{border:0;padding:0;margin:0 0 20px}
+fieldset .hint{margin:0 0 10px}
 fieldset legend{font-size:13px;font-weight:600;color:var(--muted);padding:0 0 8px;
   border-bottom:1px solid var(--rule-soft);width:100%;margin-bottom:12px}
 
@@ -198,7 +199,7 @@ input[type=number]:disabled{background:#f4f6f5;color:var(--muted);cursor:not-all
 
         <fieldset>
           <legend><b>Additional Solver (Optional)</b></legend>
-          <p class="hint" style="margin:0 0 10px">Model backwards from the tenure horizon above, keeping everything else as frozen.<br>(read notes below for explanation)</p>
+          <p class="hint">Model backwards from the tenure horizon above, keeping everything else as frozen.<br>(read notes below for explanation)</p>
           <div class="solve-actions">
             <button class="btn" id="solveSpend" type="button">Highest monthly spend</button>
             <button class="btn" id="solveCorpus" type="button">Smallest corpus</button>
@@ -307,7 +308,7 @@ input[type=number]:disabled{background:#f4f6f5;color:var(--muted);cursor:not-all
 
         <fieldset id="stressBox" class="off">
           <legend><b>Bad Stressful Start (Optional)</b></legend>
-			<p class="hint">Select this if your current market returns are lower than expected long term market projected returns.</p>
+			          <p class="hint">Select this if your current market returns are lower than expected long term market projected returns.</p>
           <label class="stress-toggle">
             <input type="checkbox" id="stressOn">
             <span><b>Open with a slump</b><span class="sub">Overrides the returns above for the first few years only, then resets them back to projected values. OFF by default.</span></span>
