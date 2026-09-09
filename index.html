@@ -128,6 +128,7 @@ table.years thead th{position:sticky;top:0;background:var(--panel);border-bottom
   font-weight:600;font-size:12px;color:var(--muted);z-index:1}
 table.years th:first-child,table.years td:first-child{text-align:left}
 table.years tbody tr+tr td{border-top:1px solid var(--rule-soft)}
+table.years tr.stressed td,table.years tr.stressed th{background:#faf4ea}
 table.years tr.dry td,table.years tr.dry th{background:#fbf0ee;color:var(--bad)}
 table.years tbody th{text-align:left;font-weight:500;padding:7px 12px}
 
@@ -148,6 +149,14 @@ footer h4+h4{margin-top:14px}
 .solve-out.bad{color:var(--bad)}
 .solve-out.bad .big{font-family:var(--sans);font-size:13px;font-weight:500}
 #solveApply{margin-top:9px}
+
+/* ---------- bad-start stress ---------- */
+.stress-toggle{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;margin:0 0 12px}
+.stress-toggle input{margin-top:3px;flex:none}
+.stress-toggle .sub{display:block;color:var(--muted);font-size:12px}
+fieldset.off .field label{color:var(--muted);opacity:.65}
+input[type=number]:disabled{background:#f4f6f5;color:var(--muted);cursor:not-allowed}
+.stress-echo{color:var(--muted);font-size:12.5px;margin:2px 0 0}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -296,6 +305,27 @@ footer h4+h4{margin-top:14px}
           <p class="warn" id="weightWarn"></p>
         </fieldset>
 
+        <fieldset id="stressBox" class="off">
+          <legend><b>Bad Stressful Start (Optional)</b><br>Select if your current market returns are lower than expected long term market projected returns.</legend>
+          <label class="stress-toggle">
+            <input type="checkbox" id="stressOn">
+            <span><b>Open with a slump</b><span class="sub">Overrides the returns above for the first few years only, then resets them back to projected values. OFF by default.</span></span>
+          </label>
+          <div class="field">
+            <label for="stressYears"><b>How long</b><span class="sub">years from the start</span></label>
+            <input id="stressYears" type="number" min="1" max="20" step="1" value="3" disabled>
+          </div>
+          <div class="field">
+            <label for="stressEq"><b>Equity return</b><span class="sub">% a year, both equity columns</span></label>
+            <input id="stressEq" type="number" min="-99" max="100" step="1" value="-10" disabled>
+          </div>
+          <div class="field">
+            <label for="stressDebt"><b>Debt return</b><span class="sub">% a year, all three debt columns</span></label>
+            <input id="stressDebt" type="number" min="-99" max="100" step="0.5" value="6" disabled>
+          </div>
+          <p class="stress-echo" id="stressEcho"></p>
+        </fieldset>
+
         <div class="rail-actions">
           <button class="btn" id="reset" type="button">Reset to defaults</button>
           <button class="btn" id="csv" type="button">Download CSV</button>
@@ -351,22 +381,29 @@ footer h4+h4{margin-top:14px}
         <p>The emergency fund is funded once at the start and never touched again. It compounds at its own weighted return for the whole tenure and is never redeemed, so no tax is ever charged on it — in reality redeeming it would be taxed, so read its balance as a gross figure. If Bucket&nbsp;1 empties mid-year the shortfall is pulled early from Bucket&nbsp;2 and then Bucket&nbsp;3 — never from the emergency fund.</p>
         <p>The emergency fund is filled <i>before</i> Buckets&nbsp;1 and&nbsp;2, so a corpus that cannot cover every opening bucket size would leave the later buckets short. And because it is sealed, a bigger emergency fund shortens how long total spendable amount lasts. E.g: on the default plan, going from no fund to 24 months of one costs about two years of runway. "Total Corpus" figure here includes it though.</p>
 		
-		<h4>Solving backwards (Additional Solver - Optional)</h4>
-        <p>The two solve buttons search for the number that can just barely satisfy the tenure horizon, keeping every other input you specified as frozen. They run the same model the rest of the page runs, so the answers already account for tax on each refill, for the emergency fund being filled first, and for the Bucket&nbsp;1 and&nbsp;2 targets rising with inflation.</p>
-		<p><b>Highest monthly spend:</b> largest amount available for spending with given corpus and tenure.<br><b>Smallest corpus:</b> Lowest corpus needed to fund the given monthly expense and tenure.</p>
-		<p>Note: Both answers are rounded the safe way — the spend down to the nearest ₹500, the corpus up to the nearest ₹50,000 — and then re-checked against the model, so the figure shown always clears rather than sitting a rupee on the wrong side of the line. Changing any input clears the answer, because a solved number stops being true the moment the inputs behind it move.</p>
-        <p>Read them as the edge of the cliff, not as a target. A corpus that <i>just</i> funds the tenure has no margin for a bad first decade, for a year of spending you did not plan, or for living longer than the tenure you input. The steady-return assumption below makes that edge look far firmer than it is.</p>
-
         <h4>How tax is charged</h4>
         <p>Tax applies to redemptions, not to paper growth. Each bucket carries a cost basis, and when it redeems, only the gain portion of that redemption is taxed at the bucket's weighted rate. Delivering a given amount of spendable cash therefore means redeeming slightly more than that amount. Early on the gain portion is small and the effective bite is near zero; as unrealised gains build up it climbs toward the bucket's headline rate.</p>
         <p>Every balance on this page — chart, table and CSV — is pre-tax. Unrealised gains inside a bucket have not been taxed, so the corpus at the end of the projection is worth less than it reads once you actually redeem it. Gains are tracked per bucket on an average-cost basis rather than per holding, so switching between asset classes inside a single bucket is free here; real rebalancing inside a bucket would be taxed. Losses are not carried forward or set off.</p>
         <p>The defaults are the Indian long-term rates: 12.5% on equity, 20% on bonds and gilts, and a 30% slab on ultra-short and liquid holdings. The ₹1.25 lakh a year equity exemption is not modelled — it is worth at most about ₹15,600 a year, which changes nothing material over a long projection. Override any rate in the table above.</p>
         <p><b>Assumption:</b> The opening corpus is assumed to be freshly invested, so it starts with no embedded gains. And hence no taxes as well. If your actual holdings already carry large unrealised gains, real tax in the early years will be higher than shown. <br> Also, if you are re-structuring your existing portfolio to follow this bucket strategy, consider post-tax final amount as the opening corpus for this calculation.</p>
 
+		<h4>Solving backwards (Additional Solver - Optional)</h4>
+        <p>The two solve buttons search for the number that can just barely satisfy the tenure horizon, keeping every other input you specified as frozen. They run the same model the rest of the page runs, so the answers already account for tax on each refill, for the emergency fund being filled first, and for the Bucket&nbsp;1 and&nbsp;2 targets rising with inflation.</p>
+		<p><b>Highest monthly spend:</b> largest amount available for spending with given corpus and tenure.<br><b>Smallest corpus:</b> Lowest corpus needed to fund the given monthly expense and tenure.</p>
+		<p>Note: Both answers are rounded the safe way — the spend down to the nearest ₹500, the corpus up to the nearest ₹50,000 — and then re-checked against the model, so the figure shown always clears rather than sitting a rupee on the wrong side of the line. Changing any input clears the answer, because a solved number stops being true the moment the inputs behind it move.</p>
+        <p>Read them as the edge of the cliff, not as a target. A corpus that <i>just</i> funds the tenure has no margin for a bad first decade, for a year of spending you did not plan, or for living longer than the tenure you input. The steady-return assumption below makes that edge look far firmer than it is.</p>
+
+        <h4>Bad Stressful Start (Optional)</h4>
+        <p>OFF by default: Enabling this makes the first few years returns forced to what you set here, after which the matrix rates resume for the rest of the projection. Both equity columns take the equity figure and all three debt columns take the debt figure, the emergency fund included.</p>
+        <p>This exists because a steady projection cannot show what the buckets are for. On flat returns, money parked in Bucket&nbsp;1 or&nbsp;2 simply earns less than it would in Bucket&nbsp;3, so the model rewards shrinking both towards zero — the opposite of the strategy this page is built around.</p>
+        <p>Ticking the box does not simply reverse that, and it is worth being plain about what it does show. A mild slump still favours small buckets: the low return on all those parked months compounds across the whole tenure, while the protection only lasts as long as the slump does. It is the severe and prolonged cases where the structure earns its keep. Somewhere around a 40% annual fall held for three years, or 30% held for five, the buckets begin buying two to three extra years of runway, because Bucket&nbsp;3 is no longer being liquidated at the bottom to fund the monthly spend. Set your own numbers, then run the same plan again with both bucket sizes at zero and compare — that comparison is the honest way to decide whether the structure is worth its cost to you.</p>
+        <p>Inflation is unchanged during the slump. Note that this is being generous — the awkward history tells us that prices will keep rising while markets fall.</p>
+        <p>The two solve buttons respect the setting. With the box ticked, "smallest corpus" answers the more useful question: the least you need to survive a bad opening rather than an average one.</p>
+
         <h4>Inflation</h4>
         <p>Inflation applies only to the monthly spends, which increases every year. Because Buckets&nbsp;1 and&nbsp;2 are defined in months of spending, their refill targets follow it up. Balances by-themselves are never inflation-adjusted.</p>
 
-        <p style="margin-top:14px">It's merely a planning template, no advice provided. <br>Assumption: Returns are assumed to be steady every year; real markets do not provide steady returns. Bucket structure helps mitigate and soften this sequence-of-returns risk.</p>
+        <p style="margin-top:14px">It's merely a planning template, no advice provided. <br>Assumption: Returns are assumed to be steady every year; real markets do not provide steady returns.</p>
 		<p style="margin-top:14px">Send feedback and comments to <b>puneetg123@yahoo.com</b></p>
       </footer>
     </main>
@@ -389,6 +426,7 @@ const DEFAULTS = {
   corpus:10000000, expense:100000, inflation:7, horizon:40,
   mEF:12, mB1:18, mB2:48,
   ret:[9,10,6,5.5,5], tax:[12.5,12.5,20,30,30],
+  stressYears:3, stressEq:-10, stressDebt:6,
   w:[[0,0,0,0,100],[0,0,0,100,0],[20,0,80,0,0],[0,80,20,0,0]]
 };
 
@@ -424,8 +462,24 @@ function readState(){
   $$('input[data-k="ret"]').forEach(el => s.ret[+el.dataset.i] = Math.max(-99, Math.min(100, num(el))));
   $$('input[data-k="tax"]').forEach(el => s.tax[+el.dataset.i] = Math.max(0, Math.min(100, num(el))));
   $$('input[data-k="w"]').forEach(el => s.w[+el.dataset.b][+el.dataset.i] = Math.max(0, num(el)));
+
+  // Null unless the box is ticked. Everything downstream keys off that, so an unticked box
+  // leaves the model on exactly the path it took before this feature existed.
+  s.stress = $("#stressOn").checked ? {
+    years: Math.max(1, Math.min(20, Math.round(num($("#stressYears")) || 1))),
+    eq:    Math.max(-99, Math.min(100, num($("#stressEq")))),
+    debt:  Math.max(-99, Math.min(100, num($("#stressDebt"))))
+  } : null;
   return s;
 }
+
+// the five asset columns, weighted by one bucket's row
+function weightedGross(row, rets){
+  const tot = row.reduce((a,b)=>a+b,0) || 1;
+  return row.reduce((a,w,i)=>a + w*rets[i], 0) / tot / 100;
+}
+// columns 0 and 1 are the equity ones; 2, 3 and 4 are all debt
+const stressRates = st => [st.eq, st.eq, st.debt, st.debt, st.debt];
 
 /* ---------- a bucket: value, cost basis, gross return, tax rate ---------- */
 function makeBucket(value, gross, taxRate){
@@ -457,12 +511,10 @@ function growOneMonth(b){ b.v *= (b.g > -1) ? Math.pow(1 + b.g, 1/12) : 0; }
 
 /* ---------- the model ---------- */
 function simulate(s){
-  const stats = s.w.map(row => {
-    const tot   = row.reduce((a,b)=>a+b,0) || 1;
-    const gross = row.reduce((a,w,i)=>a + w*s.ret[i], 0) / tot / 100;
-    const taxw  = row.reduce((a,w,i)=>a + w*s.tax[i], 0) / tot / 100;
-    return { gross, taxw };
-  });
+  const stats = s.w.map(row => ({
+    gross: weightedGross(row, s.ret),
+    taxw:  weightedGross(row, s.tax)
+  }));
 
   let rem = Math.max(0, s.corpus);
   const open = [];
@@ -483,6 +535,13 @@ function simulate(s){
   let taxSoFar = 0;
 
   for (let y = 1; y <= CAP; y++){
+    // Buckets otherwise keep the fixed gross set at construction. Only a live stress window
+    // rewrites it, and only for the years inside that window.
+    if (s.stress){
+      const rr = y <= s.stress.years ? stressRates(s.stress) : s.ret;
+      bk.forEach((b,i)=> b.g = weightedGross(s.w[i], rr));
+    }
+
     const monthly = s.expense * Math.pow(1 + s.inflation, y-1);
     let shortfall = 0;
 
@@ -689,7 +748,8 @@ function renderTable(res, s, view){
     const c = r.bal.map(v => Math.round(v));
     const spendable = c[1] + c[2] + c[3];
     return `
-    <tr class="${res.failYear === r.year ? "dry":""}">
+    <tr class="${[res.failYear === r.year ? "dry":"",
+                  s.stress && r.year >= 1 && r.year <= s.stress.years ? "stressed":""].filter(Boolean).join(" ")}">
       <th scope="row">${r.year === 0 ? "Start" : r.year}</th>
       <td>${full(r.monthly)}</td>
       ${c.map(v=>`<td>${full(v)}</td>`).join("")}
@@ -754,6 +814,14 @@ function renderChart(res, s, view){
       const anchor = xLine > (PAD.l + iw * 0.65) ? "end" : "start";
       const textX = xLine + (anchor === "end" ? -7 : 7);
       out += `<text x="${textX.toFixed(1)}" y="${PAD.t+13}" text-anchor="${anchor}" font-size="12" font-weight="600" fill="#a63328">Spending unfunded</text>`;
+    }
+  }
+  if (s.stress){
+    const i = view.findIndex(r => r.year === s.stress.years);
+    if (i > 0){
+      const x = X(i);
+      out += `<line x1="${x.toFixed(1)}" y1="${PAD.t}" x2="${x.toFixed(1)}" y2="${PAD.t+ih}" stroke="#c2833a" stroke-width="1.5" stroke-dasharray="3 3"/>`;
+      out += `<text x="${(x+6).toFixed(1)}" y="${H-38}" font-size="11.5" font-weight="600" fill="#c2833a">slump ends</text>`;
     }
   }
   out += `<line x1="${PAD.l}" y1="${PAD.t+ih}" x2="${W-PAD.r}" y2="${PAD.t+ih}" stroke="#16262c" stroke-width="1"/>`;
@@ -855,12 +923,26 @@ function run(){
   const view = res.rows.filter(r => r.year <= s.horizon);
   lastRun = { s, res, view };
   renderVerdict(res, s, view);
+  if (s.stress){
+    $("#verdictNote").textContent += ` Bad start is on: ${s.stress.eq}% equity and ${s.stress.debt}% debt`
+      + ` for year${s.stress.years > 1 ? "s 1\u2013" + s.stress.years : " 1"}, then the rates in the matrix resume.`;
+  }
   renderChart(res, s, view);
   renderCascade(res, view);
   renderTable(res, s, view);
 }
 
-document.addEventListener("input", e => { if (e.target.matches("input")){ clearSolve(); run(); } });
+function syncStress(){
+  const on = $("#stressOn").checked;
+  ["#stressYears","#stressEq","#stressDebt"].forEach(id => $(id).disabled = !on);
+  $("#stressBox").classList.toggle("off", !on);
+  if (!on){ $("#stressEcho").textContent = ""; return; }
+  const s = readState();
+  $("#stressEcho").textContent =
+    `Years 1\u2013${s.stress.years} run at ${s.stress.eq}% equity and ${s.stress.debt}% debt, then the rates above resume.`;
+}
+
+document.addEventListener("input", e => { if (e.target.matches("input")){ clearSolve(); syncStress(); run(); } });
 window.addEventListener("resize", () => { if (lastRun) renderChart(lastRun.res, lastRun.s, lastRun.view); });
 
 $("#reset").addEventListener("click", ()=>{
@@ -870,6 +952,11 @@ $("#reset").addEventListener("click", ()=>{
   $$('input[data-k="ret"]').forEach(el => el.value = DEFAULTS.ret[+el.dataset.i]);
   $$('input[data-k="tax"]').forEach(el => el.value = DEFAULTS.tax[+el.dataset.i]);
   $$('input[data-k="w"]').forEach(el => el.value = DEFAULTS.w[+el.dataset.b][+el.dataset.i]);
+  $("#stressOn").checked = false;
+  $("#stressYears").value = DEFAULTS.stressYears;
+  $("#stressEq").value    = DEFAULTS.stressEq;
+  $("#stressDebt").value  = DEFAULTS.stressDebt;
+  syncStress();
   run();
 });
 
@@ -886,6 +973,7 @@ $("#csv").addEventListener("click", ()=>{
   setTimeout(()=>URL.revokeObjectURL(url), 1000);
 });
 
+syncStress();
 run();
 </script>
 </body>
