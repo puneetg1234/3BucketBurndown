@@ -136,6 +136,18 @@ footer p{margin:0 0 8px}
 footer h3{font-family:var(--serif);font-size:18px;color:var(--ink);margin:0 0 12px;font-weight:600}
 footer h4{font-size:13px;color:var(--ink);margin:0 0 6px;font-weight:600}
 footer h4+h4{margin-top:14px}
+
+/* ---------- solve-for ---------- */
+.solve-actions{display:flex;flex-wrap:wrap;gap:6px}
+.solve-actions .btn{font-size:12.5px;padding:6px 10px}
+.solve-out{margin:11px 0 0;font-size:13px;line-height:1.45}
+.solve-out:empty{margin:0}
+.solve-out .big{font-family:var(--serif);font-size:21px;font-weight:600;letter-spacing:-.01em;
+  font-variant-numeric:tabular-nums;display:block;margin-bottom:3px}
+.solve-out .why{color:var(--muted);font-size:12.5px;display:block}
+.solve-out.bad{color:var(--bad)}
+.solve-out.bad .big{font-family:var(--sans);font-size:13px;font-weight:500}
+#solveApply{margin-top:9px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -144,7 +156,7 @@ footer h4+h4{margin-top:14px}
 
   <header class="masthead">
     <h1>Three-bucket Burndown Model</h1>
-	<p><b>Simulates a retirement corpus burndown.</b><br>Corpus is split across an Emergency Fund and three buckets. Each bucket refills once a year from the one behind it. Emergency fund is sealed with no withdrawals. Redemptions are taxed.</p>
+	<p><b>Simulates a retirement corpus burndown.</b><br>Corpus is split across an Emergency Fund and three buckets. Each bucket refills once a year from the one behind it. Emergency fund is sealed with no withdrawals. Redemptions are taxed.<br><br>Use <b>Additional Solver</b> in the sidebar to work backwards.</p>
   </header>
 
   <div class="layout">
@@ -173,6 +185,17 @@ footer h4+h4{margin-top:14px}
             <label for="horizon"><b>Years to project</b></label>
             <input id="horizon" type="number" min="2" max="90" step="1" value="40">
           </div>
+        </fieldset>
+
+        <fieldset>
+          <legend><b>Additional Solver (Optional)</b></legend>
+          <p class="hint" style="margin:0 0 10px">Model backwards from the tenure horizon above, keeping everything else as frozen.<br>(read notes below for explanation)</p>
+          <div class="solve-actions">
+            <button class="btn" id="solveSpend" type="button">Highest monthly spend</button>
+            <button class="btn" id="solveCorpus" type="button">Smallest corpus</button>
+          </div>
+          <p class="solve-out" id="solveOut" aria-live="polite"></p>
+          <button class="btn" id="solveApply" type="button" style="display:none">Apply to the plan</button>
         </fieldset>
 
         <fieldset>
@@ -215,8 +238,8 @@ footer h4+h4{margin-top:14px}
               <tbody>
                 <tr>
                   <th><b>Return %</b><br>pre-tax</th>
-                  <td><input class="narrow" data-k="ret" data-i="0" type="number" min="-99" max="100" step="0.1" value="9"></td>
-                  <td><input class="narrow" data-k="ret" data-i="1" type="number" min="-99" max="100" step="0.1" value="10"></td>
+                  <td><input class="narrow" data-k="ret" data-i="0" type="number" min="-99" max="100" step="0.1" value="10"></td>
+                  <td><input class="narrow" data-k="ret" data-i="1" type="number" min="-99" max="100" step="0.1" value="11"></td>
                   <td><input class="narrow" data-k="ret" data-i="2" type="number" min="-99" max="100" step="0.1" value="6"></td>
                   <td><input class="narrow" data-k="ret" data-i="3" type="number" min="-99" max="100" step="0.1" value="5.5"></td>
                   <td><input class="narrow" data-k="ret" data-i="4" type="number" min="-99" max="100" step="0.1" value="5"></td>
@@ -312,8 +335,8 @@ footer h4+h4{margin-top:14px}
         <table class="years" id="years">
           <thead>
             <tr>
-              <th>Year</th><th>Monthly spend</th><th>Emergency<br>fund</th><th>Bucket 1</th>
-              <th>Bucket 2</th><th>Bucket 3</th><th>Spendable<br>B1+B2+B3</th><th>Total<br>incl. emergency fund</th><th>Tax paid</th>
+              <th>Year</th><th>Monthly spend<br>(inflated)</th><th>Emergency<br>fund</th><th>Bucket 1</th>
+              <th>Bucket 2</th><th>Bucket 3</th><th>Spendable<br>(B1+B2+B3)</th><th>Total Corpus<br>(incl. emergency fund)</th><th>Tax paid</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -322,16 +345,24 @@ footer h4+h4{margin-top:14px}
 
       <footer>
         <h3>Important Notes</h3>
+        
 		<h4>What happens each year</h4>
         <p>Every month Bucket&nbsp;1 redeems enough to hand you that month's spending. All four buckets then compound one month at their weighted gross return. At the year end Bucket&nbsp;2 refills Bucket&nbsp;1 back to its target out of its own existing holdings, and Bucket&nbsp;3 then tops Bucket&nbsp;2 back up to its own target — targets being the Bucket&nbsp;1 and Bucket&nbsp;2 sizes you set, measured in months of the coming year's spending, so each year opens fully funded for the year ahead. If Bucket&nbsp;2 cannot cover the Bucket&nbsp;1 refill on its own, Bucket&nbsp;3 backstops it. Nothing refills Bucket&nbsp;3.</p>
         <p>The emergency fund is funded once at the start and never touched again. It compounds at its own weighted return for the whole tenure and is never redeemed, so no tax is ever charged on it — in reality redeeming it would be taxed, so read its balance as a gross figure. If Bucket&nbsp;1 empties mid-year the shortfall is pulled early from Bucket&nbsp;2 and then Bucket&nbsp;3 — never from the emergency fund.</p>
-        <p>The fund is filled <i>before</i> Buckets&nbsp;1 and&nbsp;2, so a corpus that cannot cover every opening size you asked for leaves the later buckets short — the sidebar warning names which ones. And because it is sealed, a bigger emergency fund shortens how long spending lasts: on the default plan, going from no fund to 24 months of one costs about two years of runway. Every "total corpus" figure here includes it, which is why the table and the CSV also carry a spendable column that leaves it out.</p>
+        <p>The emergency fund is filled <i>before</i> Buckets&nbsp;1 and&nbsp;2, so a corpus that cannot cover every opening bucket size would leave the later buckets short. And because it is sealed, a bigger emergency fund shortens how long total spendable amount lasts. E.g: on the default plan, going from no fund to 24 months of one costs about two years of runway. "Total Corpus" figure here includes it though.</p>
+		
+		<h4>Solving backwards (Additional Solver - Optional)</h4>
+        <p>The two solve buttons search for the number that can just barely satisfy the tenure horizon, keeping every other input you specified as frozen. They run the same model the rest of the page runs, so the answers already account for tax on each refill, for the emergency fund being filled first, and for the Bucket&nbsp;1 and&nbsp;2 targets rising with inflation.
+		<p><br><b>Highest monthly spend:</b> largest amount available for spending with given corpus and tenure.
+		<br><b>Smallest corpus:</b> Lowest corpus needed to fund the given monthly expense and tenure.</p>
+		<p><br>Note: Both answers are rounded the safe way — the spend down to the nearest ₹500, the corpus up to the nearest ₹50,000 — and then re-checked against the model, so the figure shown always clears rather than sitting a rupee on the wrong side of the line. Changing any input clears the answer, because a solved number stops being true the moment the inputs behind it move.</P>
+        Read them as the edge of the cliff, not as a target. A corpus that <i>just</i> funds the tenure has no margin for a bad first decade, for a year of spending you did not plan, or for living longer than the tenure you input. The steady-return assumption below makes that edge look far firmer than it is.</p>
 
         <h4>How tax is charged</h4>
         <p>Tax applies to redemptions, not to paper growth. Each bucket carries a cost basis, and when it redeems, only the gain portion of that redemption is taxed at the bucket's weighted rate. Delivering a given amount of spendable cash therefore means redeeming slightly more than that amount. Early on the gain portion is small and the effective bite is near zero; as unrealised gains build up it climbs toward the bucket's headline rate.</p>
         <p>Every balance on this page — chart, table and CSV — is pre-tax. Unrealised gains inside a bucket have not been taxed, so the corpus at the end of the projection is worth less than it reads once you actually redeem it. Gains are tracked per bucket on an average-cost basis rather than per holding, so switching between asset classes inside a single bucket is free here; real rebalancing inside a bucket would be taxed. Losses are not carried forward or set off.</p>
         <p>The defaults are the Indian long-term rates: 12.5% on equity, 20% on bonds and gilts, and a 30% slab on ultra-short and liquid holdings. The ₹1.25 lakh a year equity exemption is not modelled — it is worth at most about ₹15,600 a year, which changes nothing material over a long projection. Override any rate in the table above.</p>
-        <p>Assumption: The opening corpus is assumed to be freshly invested, so it starts with no embedded gains. And hence no taxes as well. If your actual holdings already carry large unrealised gains, real tax in the early years will be higher than shown. <br> Also, if you are re-structuring your existing portfolio to follow this bucket strategy, consider post-tax final amount as the opening corpus for this calculation.</p>
+        <p><b>Assumption:</b> The opening corpus is assumed to be freshly invested, so it starts with no embedded gains. And hence no taxes as well. If your actual holdings already carry large unrealised gains, real tax in the early years will be higher than shown. <br> Also, if you are re-structuring your existing portfolio to follow this bucket strategy, consider post-tax final amount as the opening corpus for this calculation.</p>
 
         <h4>Inflation</h4>
         <p>Inflation applies only to the monthly spends, which increases every year. Because Buckets&nbsp;1 and&nbsp;2 are defined in months of spending, their refill targets follow it up. Balances by-themselves are never inflation-adjusted.</p>
@@ -358,7 +389,7 @@ const CAP = 120;
 const DEFAULTS = {
   corpus:10000000, expense:100000, inflation:7, horizon:40,
   mEF:12, mB1:18, mB2:48,
-  ret:[9,10,6,5.5,5], tax:[12.5,12.5,20,30,30],
+  ret:[10,11,6,5.5,5], tax:[12.5,12.5,20,30,30],
   w:[[0,0,0,0,100],[0,0,0,100,0],[20,0,80,0,0],[0,80,20,0,0]]
 };
 
@@ -495,6 +526,113 @@ function simulate(s){
 }
 
 /* ---------- verdict ---------- */
+/* ================= solve-for =================
+   Both solvers call simulate() untouched, so the answer respects everything the model does —
+   the tax on each refill, the sealed fund being filled first, the bucket targets tracking
+   inflation. Bisection is valid because clearing the horizon is monotonic in both variables:
+   more spending is never better, more corpus is never worse. Answers are rounded the safe
+   way — spend down, corpus up — and then re-checked, so the number shown always clears.      */
+function clears(s, key, value){
+  const t = Object.assign({}, s); t[key] = value;
+  const res = simulate(t);
+  return !res.failYear || res.failYear > t.horizon;
+}
+function endingTotal(s, key, value){
+  const t = Object.assign({}, s); t[key] = value;
+  const res = simulate(t);
+  const view = res.rows.filter(r => r.year <= t.horizon);
+  return view[view.length-1].total;
+}
+
+function solveMaxSpend(s){
+  if (s.corpus <= 0) return { ok:false, msg:"Set a corpus above zero first." };
+  // spending nothing always clears, so 0 is a safe floor; find a ceiling that fails
+  let hi = Math.max(1000, s.expense || 1000), n = 0;
+  while (clears(s, "expense", hi)){
+    hi *= 2;
+    if (++n > 40) return { ok:false, msg:"No spending level exhausts this corpus inside the horizon — returns are running well ahead of inflation." };
+  }
+  let lo = 0;
+  for (let i = 0; i < 60; i++){
+    const mid = (lo + hi) / 2;
+    if (clears(s, "expense", mid)) lo = mid; else hi = mid;
+  }
+  let v = Math.floor(lo / 500) * 500;
+  while (v > 0 && !clears(s, "expense", v)) v -= 500;
+  if (v <= 0) return { ok:false, msg:"This corpus cannot fund even ₹500 a month for the full horizon." };
+  return { ok:true, value:v };
+}
+
+function solveMinCorpus(s){
+  if (s.expense <= 0) return { ok:false, msg:"Set a monthly spend above zero first." };
+  let hi = Math.max(s.corpus, s.expense * 120, 1e5), n = 0;
+  while (!clears(s, "corpus", hi)){
+    hi *= 2;
+    if (++n > 60 || !isFinite(hi)) return { ok:false, msg:"No corpus clears this horizon. Returns are far enough below inflation that spending outruns any starting amount." };
+  }
+  let lo = 0;
+  for (let i = 0; i < 60; i++){
+    const mid = (lo + hi) / 2;
+    if (clears(s, "corpus", mid)) hi = mid; else lo = mid;
+  }
+  let v = Math.ceil(hi / 50000) * 50000;
+  if (!clears(s, "corpus", v)) v += 50000;
+  return { ok:true, value:v };
+}
+
+let solveApply = null;
+function clearSolve(){
+  const box = $("#solveOut");
+  box.innerHTML = ""; box.className = "solve-out";
+  $("#solveApply").style.display = "none";
+  solveApply = null;
+}
+function showSolve(html, bad, apply){
+  const box = $("#solveOut");
+  box.innerHTML = html;
+  box.className = "solve-out" + (bad ? " bad" : "");
+  solveApply = apply || null;
+  $("#solveApply").style.display = apply ? "" : "none";
+}
+
+function pct(from, to){
+  if (from <= 0) return "";
+  const d = (to - from) / from * 100;
+  if (Math.abs(d) < 0.5) return " — essentially what you have set";
+  return ` — ${Math.abs(d).toFixed(0)}% ${d > 0 ? "more" : "less"} than the ${full(from)} you have set`;
+}
+
+$("#solveSpend").addEventListener("click", ()=>{
+  const s = readState();
+  const r = solveMaxSpend(s);
+  if (!r.ok) return showSolve(`<span class="big">${r.msg}</span>`, true, null);
+  const left = endingTotal(s, "expense", r.value);
+  showSolve(
+    `<span class="big">${money(r.value)} a month</span>`
+    + `<span class="why">The most this ${money(s.corpus)} corpus funds for ${s.horizon} years${pct(s.expense, r.value)}. `
+    + `Ends at ${money(left)} pre-tax, sealed fund included.</span>`,
+    false, ()=>{ $("#expense").value = Math.round(r.value); run(); });
+});
+
+$("#solveCorpus").addEventListener("click", ()=>{
+  const s = readState();
+  const r = solveMinCorpus(s);
+  if (!r.ok) return showSolve(`<span class="big">${r.msg}</span>`, true, null);
+  const gap = r.value - s.corpus;
+  showSolve(
+    `<span class="big">${money(r.value)}</span>`
+    + `<span class="why">The smallest corpus that funds ${money(s.expense)} a month for ${s.horizon} years. `
+    + (Math.abs(gap) < 1
+        ? `That is what you have set.`
+        : gap > 0
+          ? `You are ${money(gap)} short of it.`
+          : `You are ${money(-gap)} above it.`)
+    + `</span>`,
+    false, ()=>{ $("#corpus").value = Math.round(r.value); run(); });
+});
+
+$("#solveApply").addEventListener("click", ()=>{ if (solveApply) solveApply(); });
+
 function renderVerdict(res, s, view){
   const v = $("#verdict"), n = $("#verdictNote"), fy = res.failYear;
 
@@ -723,10 +861,11 @@ function run(){
   renderTable(res, s, view);
 }
 
-document.addEventListener("input", e => { if (e.target.matches("input")) run(); });
+document.addEventListener("input", e => { if (e.target.matches("input")){ clearSolve(); run(); } });
 window.addEventListener("resize", () => { if (lastRun) renderChart(lastRun.res, lastRun.s, lastRun.view); });
 
 $("#reset").addEventListener("click", ()=>{
+  clearSolve();
   ["corpus","expense","inflation","horizon"].forEach(k => $("#"+k).value = DEFAULTS[k]);
   $("#mEF").value = DEFAULTS.mEF; $("#mB1").value = DEFAULTS.mB1; $("#mB2").value = DEFAULTS.mB2;
   $$('input[data-k="ret"]').forEach(el => el.value = DEFAULTS.ret[+el.dataset.i]);
@@ -736,7 +875,7 @@ $("#reset").addEventListener("click", ()=>{
 });
 
 $("#csv").addEventListener("click", ()=>{
-  const head = "Year,Monthly expense,Emergency fund (sealed),Bucket 1,Bucket 2,Bucket 3,Spendable (B1+B2+B3),Total incl. emergency fund,Tax paid\n";
+  const head = "Year,Monthly expense,Emergency fund (sealed),Bucket 1,Bucket 2,Bucket 3,Spendable (B1+B2+B3),Total Corpus incl. emergency fund,Tax paid\n";
   const body = lastRun.view.map(r => {
     const c = r.bal.map(Math.round), spendable = c[1] + c[2] + c[3];
     return [r.year, Math.round(r.monthly), ...c, spendable, c[0] + spendable, Math.round(r.tax)].join(",");
