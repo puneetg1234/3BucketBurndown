@@ -59,11 +59,11 @@ fieldset legend{font-size:13px;font-weight:600;color:var(--muted);padding:0 0 8p
 .field{display:grid;grid-template-columns:minmax(0,1fr) 168px;gap:12px;align-items:center;margin-bottom:12px}
 .field label{font-size:13.5px;line-height:1.3}
 .field .sub{display:block;color:var(--muted);font-size:12px}
-input[type=number]{
+input[type=number],input.rupee{
   width:100%;font:inherit;font-size:15px;font-variant-numeric:tabular-nums;text-align:right;
   padding:9px 10px;border:1px solid var(--rule);border-radius:2px;background:#fbfcfb;color:var(--ink);
 }
-input[type=number]:focus-visible{outline:2px solid var(--focus);outline-offset:1px;border-color:transparent}
+input[type=number]:focus-visible,input.rupee:focus-visible{outline:2px solid var(--focus);outline-offset:1px;border-color:transparent}
 input.narrow{padding:8px 8px;font-size:14px;min-width:56px;text-align:center;
   -moz-appearance:textfield;appearance:textfield}
 input.narrow::-webkit-outer-spin-button,
@@ -156,7 +156,7 @@ footer h4+h4{margin-top:14px}
 .stress-toggle input{margin-top:3px;flex:none}
 .stress-toggle .sub{display:block;color:var(--muted);font-size:12px}
 fieldset.off .field label{color:var(--muted);opacity:.65}
-input[type=number]:disabled{background:#f4f6f5;color:var(--muted);cursor:not-allowed}
+input[type=number]:disabled,input.rupee:disabled{background:#f4f6f5;color:var(--muted);cursor:not-allowed}
 .stress-echo{color:var(--muted);font-size:12.5px;margin:2px 0 0}
 
 /* ---------- lumpy cash flows ---------- */
@@ -179,6 +179,12 @@ table.flows tbody tr:last-child td{padding-bottom:2px}
   border:1px solid var(--rule);border-radius:2px;background:#fbfcfb;color:var(--ink)}
 .share-box:focus-visible{outline:2px solid var(--focus);outline-offset:1px;border-color:transparent}
 .share-msg{display:block;color:var(--muted);font-size:12.5px;margin-top:6px}
+
+/* ---------- rupee entry ---------- */
+.amt{display:block}
+.amt-echo{display:block;text-align:right;color:var(--muted);font-size:12px;
+  margin-top:3px;font-variant-numeric:tabular-nums;min-height:1.1em}
+.amt-echo.bad{color:var(--bad)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -202,17 +208,23 @@ table.flows tbody tr:last-child td{padding-bottom:2px}
     <aside class="rail">
       <div class="rail-inner">
         <h2>Your plan</h2>
-        <p class="hint">Everything recalculates as you type.</p>
+        <p class="hint">Everything recalculates as you type. Amounts accept <b>4.2cr</b>, <b>50L</b>, <b>75k</b> or plain digits.</p>
 
         <fieldset>
           <legend>Money</legend>
           <div class="field">
             <label for="corpus">Retirement corpus<span class="sub">Withdrawals only — leave out goal money; Net of any outstanding loans</span></label>
-            <input id="corpus" type="number" min="0" step="100000" value="10000000">
+            <div class="amt">
+              <input id="corpus" class="rupee" type="text" inputmode="decimal" autocomplete="off" value="1,00,00,000">
+              <span class="amt-echo" id="corpusEcho"></span>
+            </div>
           </div>
           <div class="field">
             <label for="expense">Monthly expenses<span class="sub">Over and above pension or rent</span></label>
-            <input id="expense" type="number" min="0" step="5000" value="100000">
+            <div class="amt">
+              <input id="expense" class="rupee" type="text" inputmode="decimal" autocomplete="off" value="1,00,000">
+              <span class="amt-echo" id="expenseEcho"></span>
+            </div>
           </div>
           <div class="field">
             <label for="inflation">Inflation<span class="sub">% a year, applied to the spend</span></label>
@@ -514,11 +526,67 @@ function money(v){
 }
 function full(v){ return (v<0?"−":"")+"₹"+inr.format(Math.round(Math.abs(v))); }
 
+/* ================= rupee entry =================
+   The headline amounts run to eight digits, which is a lot of unseparated zeroes to get
+   right. These fields therefore take text rather than a bare number: grouped digits
+   (1,00,00,000), Indian shorthand (4.2cr, 50L, 75k) or plain digits all parse to the same
+   value. Everything downstream still sees an ordinary number.                            */
+const RUPEE_SELECTOR = '#corpus, #expense, input[data-f="amt"]';
+
+function parseRupees(raw){
+  let s = String(raw == null ? "" : raw).trim().toLowerCase().replace(/[,\s\u20b9]/g, "");
+  if (!s) return 0;
+  // Ordered longest-first, and the ambiguous single letters last: "lac" ends in a "c", so a
+  // bare-c rule placed any earlier would read fifty lakh as fifty crore.
+  const UNITS = [
+    [/(crores|crore|cr)$/, 1e7],
+    [/(lakhs|lakh|lacs|lac)$/, 1e5],
+    [/(thousand|k)$/, 1e3],
+    [/c$/, 1e7],
+    [/l$/, 1e5]
+  ];
+  let mult = 1;
+  for (const [re, m] of UNITS) {
+    if (re.test(s)) { mult = m; s = s.replace(re, ""); break; }
+  }
+  const n = parseFloat(s);
+  return isFinite(n) ? n * mult : 0;
+}
+
+// Indian digit grouping, no symbol — what the field itself shows.
+function formatRupees(v){
+  const n = Math.round(Math.abs(v));
+  return (v < 0 ? "-" : "") + inr.format(n);
+}
+
+// The echo under each headline field, so a stray zero is obvious the moment it is typed.
+function updateAmountEchoes(){
+  [["#corpus", "#corpusEcho"], ["#expense", "#expenseEcho"]].forEach(([field, echo]) => {
+    const el = $(echo);
+    if (!el) return;
+    const raw = $(field).value.trim();
+    if (raw === ""){ el.textContent = ""; el.classList.remove("bad"); return; }
+    const v = parseRupees(raw);
+    el.textContent = money(v);
+    el.classList.toggle("bad", v <= 0);
+  });
+}
+
+// Rewrite what was typed into grouped digits once the field is left alone. Done on change
+// rather than on every keystroke, so it never fights the cursor mid-entry.
+document.addEventListener("change", e => {
+  if (!e.target.matches(RUPEE_SELECTOR)) return;
+  const raw = e.target.value.trim();
+  if (raw === "") return;
+  e.target.value = formatRupees(parseRupees(raw));
+  updateAmountEchoes();
+});
+
 /* ---------- read inputs ---------- */
 function readState(){
   const s = {
-    corpus: Math.max(0, num($("#corpus"))),
-    expense: Math.max(0, num($("#expense"))),
+    corpus: Math.max(0, parseRupees($("#corpus").value)),
+    expense: Math.max(0, parseRupees($("#expense").value)),
     inflation: Math.max(-0.99, num($("#inflation")) / 100),
     horizon: Math.max(2, Math.min(90, Math.round(num($("#horizon")) || DEFAULTS.horizon))),
     months: [Math.max(0, num($("#mEF"))), Math.max(0, num($("#mB1"))), Math.max(0, num($("#mB2")))],
@@ -540,7 +608,7 @@ function readState(){
     const rows = [];
     $$("#flowRows tr").forEach(tr => {
       const y = Math.round(num(tr.querySelector('[data-f="year"]')));
-      const a = num(tr.querySelector('[data-f="amt"]'));
+      const a = parseRupees(tr.querySelector('[data-f="amt"]').value);
       if (y >= 1 && y <= 90 && Math.abs(a) > 0.5)
         rows.push({ year:y, amt:a, rep: tr.querySelector('[data-f="rep"]').checked });
     });
@@ -781,7 +849,7 @@ $("#solveSpend").addEventListener("click", ()=>{
     `<span class="big">${money(r.value)} a month</span>`
     + `<span class="why">The most this ${money(s.corpus)} corpus funds for ${s.horizon} years${pct(s.expense, r.value)}. `
     + `Ends at ${money(left)} pre-tax, sealed fund included.</span>`,
-    false, ()=>{ $("#expense").value = Math.round(r.value); run(); });
+    false, ()=>{ $("#expense").value = formatRupees(r.value); updateAmountEchoes(); run(); });
 });
 
 $("#solveCorpus").addEventListener("click", ()=>{
@@ -798,7 +866,7 @@ $("#solveCorpus").addEventListener("click", ()=>{
           ? `You are ${money(gap)} short of it.`
           : `You are ${money(-gap)} above it.`)
     + `</span>`,
-    false, ()=>{ $("#corpus").value = Math.round(r.value); run(); });
+    false, ()=>{ $("#corpus").value = formatRupees(r.value); updateAmountEchoes(); run(); });
 });
 
 $("#solveApply").addEventListener("click", ()=>{ if (solveApply) solveApply(); });
@@ -1059,7 +1127,7 @@ function addFlowRow(){
   const tr = document.createElement("tr");
   tr.innerHTML =
     `<td><input class="narrow" data-f="year" type="number" min="1" max="90" step="1" aria-label="Year"></td>`
-  + `<td><input class="narrow" data-f="amt" type="number" step="100000" aria-label="Amount"></td>`
+  + `<td><input class="narrow rupee" data-f="amt" type="text" inputmode="decimal" autocomplete="off" aria-label="Amount"></td>`
   + `<td><input data-f="rep" type="checkbox" aria-label="Repeats every year after"></td>`;
   tb.appendChild(tr);
   syncFlows();
@@ -1106,7 +1174,9 @@ function readWeights(){
 function shareURL(){
   const q = [];
   for (const k in SHARE_SIMPLE){
-    const id = SHARE_SIMPLE[k], v = $("#"+id).value;
+    const id = SHARE_SIMPLE[k];
+    const v = (id === "corpus" || id === "expense")
+      ? parseRupees($("#"+id).value) : $("#"+id).value;
     if (String(v) !== String(DEFAULTS[id])) q.push(k + "=" + encodeURIComponent(v));
   }
   const ret = readVec("ret"), tax = readVec("tax");
@@ -1122,7 +1192,7 @@ function shareURL(){
       const y = tr.querySelector('[data-f="year"]').value.trim();
       const a = tr.querySelector('[data-f="amt"]').value.trim();
       if (y !== "" && a !== "")
-        rows.push([y, a, tr.querySelector('[data-f="rep"]').checked ? 1 : 0].join(":"));
+        rows.push([y, parseRupees(a), tr.querySelector('[data-f="rep"]').checked ? 1 : 0].join(":"));
     });
     q.push("l=" + rows.join(";"));
     if (!$("#flowsReal").checked) q.push("ln=1");
@@ -1141,7 +1211,12 @@ function applyShareURL(){
   let any = false;
 
   for (const k in SHARE_SIMPLE)
-    if (p.has(k)){ $("#" + SHARE_SIMPLE[k]).value = p.get(k); any = true; }
+    if (p.has(k)){
+      const id = SHARE_SIMPLE[k];
+      $("#"+id).value = (id === "corpus" || id === "expense")
+        ? formatRupees(parseRupees(p.get(k))) : p.get(k);
+      any = true;
+    }
 
   const putVec = (kind, csv) => {
     const a = csv.split(",");
@@ -1179,7 +1254,7 @@ function applyShareURL(){
       if (!tr) return;
       const a = r.split(":");
       tr.querySelector('[data-f="year"]').value = a[0] || "";
-      tr.querySelector('[data-f="amt"]').value  = a[1] || "";
+      tr.querySelector('[data-f="amt"]').value  = a[1] ? formatRupees(parseRupees(a[1])) : "";
       tr.querySelector('[data-f="rep"]').checked = a[2] === "1";
     });
     any = true;
@@ -1229,14 +1304,15 @@ function syncStress(){
     `Years 1\u2013${s.stress.years} run at ${s.stress.eq}% equity and ${s.stress.debt}% debt, then the rates above resume.`;
 }
 
-document.addEventListener("input", e => { if (e.target.matches("input")){ clearSolve(); clearShare(); syncStress(); syncFlows(); run(); } });
+document.addEventListener("input", e => { if (e.target.matches("input")){ clearSolve(); clearShare(); updateAmountEchoes(); syncStress(); syncFlows(); run(); } });
 window.addEventListener("resize", () => { if (lastRun) renderChart(lastRun.res, lastRun.s, lastRun.view); });
 
 $("#reset").addEventListener("click", ()=>{
   clearSolve();
   clearShare();
   try { history.replaceState(null, "", location.href.split("#")[0]); } catch(e){}
-  ["corpus","expense","inflation","horizon"].forEach(k => $("#"+k).value = DEFAULTS[k]);
+  ["corpus","expense"].forEach(k => $("#"+k).value = formatRupees(DEFAULTS[k]));
+  ["inflation","horizon"].forEach(k => $("#"+k).value = DEFAULTS[k]);
   $("#mEF").value = DEFAULTS.mEF; $("#mB1").value = DEFAULTS.mB1; $("#mB2").value = DEFAULTS.mB2;
   $$('input[data-k="ret"]').forEach(el => el.value = DEFAULTS.ret[+el.dataset.i]);
   $$('input[data-k="tax"]').forEach(el => el.value = DEFAULTS.tax[+el.dataset.i]);
@@ -1271,6 +1347,7 @@ $("#csv").addEventListener("click", ()=>{
 
 resetFlowRows();
 applyShareURL();
+updateAmountEchoes();
 syncStress();
 syncFlows();
 run();

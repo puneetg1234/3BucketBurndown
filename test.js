@@ -115,6 +115,8 @@ function boot(hash) {
       const el = d.querySelector(`input[data-k="w"][data-b="${bucket}"][data-i="${asset}"]`);
       el.value = val; fire(el); return api;
     },
+    /** Rupee fields hold grouped text ("4,20,00,000"), so never read them with +value. */
+    rupees(sel) { return +api.el(sel).value.replace(/[^\d.-]/g, ''); },
     shareLink() { return api.el('#shareOut').querySelector('.share-box').value; },
     fragment() { const u = api.shareLink(); return u.includes('#') ? u.split('#')[1] : ''; }
   };
@@ -339,7 +341,7 @@ function suiteSolver() {
   p.click('#solveCorpus');
   ok('corpus solver returns a figure', /\d/.test(p.text('#solveOut')), '-> ' + p.text('#solveOut').slice(0, 44));
   p.click('#solveApply');
-  const corpus = +p.el('#corpus').value;
+  const corpus = p.rupees('#corpus');
   ok('the solved corpus clears the horizon', !p.failed(), `₹${corpus.toLocaleString('en-IN')}`);
   /* One rounding step below must fail, or the answer is not the smallest that works. */
   p.set('#corpus', corpus - 50000);
@@ -348,7 +350,7 @@ function suiteSolver() {
 
   p.click('#solveSpend');
   p.click('#solveApply');
-  const spend = +p.el('#expense').value;
+  const spend = p.rupees('#expense');
   ok('the solved spend clears the horizon', !p.failed(), `₹${spend.toLocaleString('en-IN')}/mo`);
   p.set('#expense', spend + 500);
   ok('one rounding step more does not clear', p.failed());
@@ -359,7 +361,7 @@ function suiteSolver() {
   p.set('#corpus', 30000000).set('#expense', 100000).set('#horizon', 30);
   p.click('#solveSpend').click('#solveApply');
   p.click('#solveCorpus').click('#solveApply');
-  const drift = Math.abs(+p.el('#corpus').value - 30000000) / 30000000 * 100;
+  const drift = Math.abs(p.rupees('#corpus') - 30000000) / 30000000 * 100;
   ok('the two solvers agree with each other', drift < 2, `${drift.toFixed(2)}% drift`);
 
   p.reset();
@@ -610,7 +612,101 @@ function suiteShare() {
     threw ? String(threw).slice(0, 110) : `(${junk.length} variants)`);
 }
 
-/* -------------------------------------------------------------- 8. edges */
+/* --------------------------------------------------------- 8. rupee entry */
+
+function suiteRupeeEntry() {
+  group('Rupee entry');
+  const p = boot();
+
+  /* Every spelling of the same amount must land on the same number. */
+  const forms = [
+    ['plain digits', '42000000', 42000000],
+    ['grouped digits', '4,20,00,000', 42000000],
+    ['crore shorthand', '4.2cr', 42000000],
+    ['crore, spelled out', '4.2 crore', 42000000],
+    ['bare c', '4.2c', 42000000],
+    ['lakh shorthand', '50L', 5000000],
+    ['lakh, spelled out', '50 lakh', 5000000],
+    ['lac spelling', '50lac', 5000000],
+    ['thousand shorthand', '750k', 750000],
+    ['rupee symbol and spaces', ' \u20b9 1,50,000 ', 150000],
+    ['uppercase CR', '2CR', 20000000]
+  ];
+  let allMatch = true;
+  for (const [label, typed, expected] of forms) {
+    p.set('#corpus', typed);
+    const shown = p.money(p.cols(0).total) - p.money(p.cols(0).ef) + p.money(p.cols(0).ef);
+    if (shown !== expected) { allMatch = false; note(`${label}: typed "${typed}" -> ${shown}, expected ${expected}`); }
+  }
+  ok('every spelling parses to the same amount', allMatch, `(${forms.length} forms)`);
+
+  /* Two different spellings of one plan must produce identical projections. */
+  const a = boot(); a.set('#corpus', '42000000');
+  const b = boot(); b.set('#corpus', '4.2cr');
+  ok('shorthand and digits give identical projections', a.snapshot() === b.snapshot());
+
+  /* Leaving the field tidies what was typed, without changing the value. */
+  p.set('#corpus', '4.2cr');
+  const before = p.snapshot();
+  p.el('#corpus').dispatchEvent(new p.w.Event('change', { bubbles: true }));
+  ok('the field is rewritten as grouped digits', p.el('#corpus').value === '4,20,00,000',
+    '-> ' + p.el('#corpus').value);
+  ok('and the projection is unchanged', p.snapshot() === before);
+
+  /* The echo is the point of the feature: a dropped zero should be visible at once. */
+  p.set('#corpus', '4200000');
+  const short = p.text('#corpusEcho');
+  p.set('#corpus', '42000000');
+  const full = p.text('#corpusEcho');
+  ok('the echo names the magnitude', /Cr|L/.test(full), `${short} vs ${full}`);
+  ok('and it changes when a zero is dropped', short !== full);
+  p.set('#corpus', '0');
+  ok('a zero amount is flagged', p.el('#corpusEcho').classList.contains('bad'));
+
+  /* Flow amounts take the same shorthand, negatives included. */
+  p.reset();
+  /* Literal mode, so the table shows the amount as typed rather than inflated to that year. */
+  p.set('#corpus', '20cr').check('#flowsOn', true).check('#flowsReal', false);
+  p.flowRow(0, 5, '-15L', false);
+  ok('a negative shorthand outflow parses', p.money(p.cols(5).flow) === -1500000,
+    String(p.money(p.cols(5).flow)));
+  p.flowRow(0, 5, '1.5cr', false);
+  ok('a positive shorthand inflow parses', p.money(p.cols(5).flow) === 15000000,
+    String(p.money(p.cols(5).flow)));
+
+  /* Nonsense must not silently become a plausible number. */
+  p.reset();
+  let threw = null;
+  try {
+    for (const junk of ['abc', '--', '1.2.3', '', 'cr', '₹', '1e5', '-', '4..2cr'])
+      p.set('#corpus', junk);
+  } catch (e) { threw = e; }
+  ok('junk input does not throw', !threw, threw ? String(threw).slice(0, 110) : '');
+
+  /* Solver answers are written back in the same readable form. */
+  p.reset();
+  p.click('#solveCorpus').click('#solveApply');
+  ok('a solved corpus is written back grouped', /,/.test(p.el('#corpus').value),
+    '-> ' + p.el('#corpus').value);
+  ok('and it still clears the horizon', !p.failed());
+
+  /* Share links must carry a plain number, not grouped text. */
+  const c = boot();
+  c.set('#corpus', '6.5cr').set('#expense', '2.25L');
+  c.click('#share');
+  const frag = c.fragment();
+  ok('the link holds unformatted numbers', /c=65000000/.test(frag) && /e=225000/.test(frag), frag);
+  const d2 = boot(frag);
+  ok('and it round-trips to the same plan', c.snapshot() === d2.snapshot());
+  ok('with the field shown grouped again', d2.el('#corpus').value === '6,50,00,000',
+    '-> ' + d2.el('#corpus').value);
+
+  p.reset();
+  ok('reset restores grouped defaults', p.el('#corpus').value === '1,00,00,000',
+    '-> ' + p.el('#corpus').value);
+}
+
+/* -------------------------------------------------------------- 9. edges */
 
 function suiteEdges() {
   group('Edge cases');
@@ -686,6 +782,7 @@ suiteSolver();
 suiteSlump();
 suiteFlows();
 suiteShare();
+suiteRupeeEntry();
 suiteEdges();
 
 const secs = ((Date.now() - started) / 1000).toFixed(1);
