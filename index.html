@@ -169,6 +169,16 @@ table.flows input[data-f="year"]{min-width:54px}
 table.flows input[data-f="amt"]{min-width:112px;text-align:right}
 table.flows input[type=checkbox]{margin:0}
 table.flows tbody tr:last-child td{padding-bottom:2px}
+
+/* ---------- share link ---------- */
+.rail-actions{flex-wrap:wrap}
+.share-out{margin:10px 0 0}
+.share-out:empty{margin:0}
+.share-box{width:100%;font-size:11.5px;line-height:1.4;padding:6px 8px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  border:1px solid var(--rule);border-radius:2px;background:#fbfcfb;color:var(--ink)}
+.share-box:focus-visible{outline:2px solid var(--focus);outline-offset:1px;border-color:transparent}
+.share-msg{display:block;color:var(--muted);font-size:12.5px;margin-top:6px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -373,6 +383,8 @@ table.flows tbody tr:last-child td{padding-bottom:2px}
         <div class="rail-actions">
           <button class="btn" id="reset" type="button">Reset to defaults</button>
           <button class="btn" id="csv" type="button">Download CSV</button>
+          <button class="btn" id="share" type="button">Copy share link</button>
+          <p class="share-out" id="shareOut" aria-live="polite"></p>
         </div>
       </div>
     </aside>
@@ -1072,6 +1084,141 @@ function syncFlows(){
 }
 $("#flowAdd").addEventListener("click", addFlowRow);
 
+/* ================= shareable link =================
+   The whole plan is put in the URL fragment, so a link carries a specific plan rather than
+   a blank calculator. Only values that differ from the defaults are written, which keeps a
+   typical link short. The fragment never reaches a server; it is read back on load.        */
+
+// short key -> element id, which is also the DEFAULTS key for these seven
+const SHARE_SIMPLE = { c:"corpus", e:"expense", i:"inflation", h:"horizon", f:"mEF", p:"mB1", q:"mB2" };
+
+function readVec(kind){
+  const a = [];
+  $$(`input[data-k="${kind}"]`).forEach(el => a[+el.dataset.i] = el.value);
+  return a;
+}
+function readWeights(){
+  const a = [[],[],[],[]];
+  $$('input[data-k="w"]').forEach(el => a[+el.dataset.b][+el.dataset.i] = el.value);
+  return a;
+}
+
+function shareURL(){
+  const q = [];
+  for (const k in SHARE_SIMPLE){
+    const id = SHARE_SIMPLE[k], v = $("#"+id).value;
+    if (String(v) !== String(DEFAULTS[id])) q.push(k + "=" + encodeURIComponent(v));
+  }
+  const ret = readVec("ret"), tax = readVec("tax");
+  if (ret.join(",") !== DEFAULTS.ret.join(",")) q.push("r=" + ret.join(","));
+  if (tax.join(",") !== DEFAULTS.tax.join(",")) q.push("t=" + tax.join(","));
+  const w = readWeights().map(r => r.join(",")).join(",");
+  if (w !== DEFAULTS.w.map(r => r.join(",")).join(",")) q.push("w=" + w);
+  if ($("#stressOn").checked)
+    q.push("s=" + [$("#stressYears").value, $("#stressEq").value, $("#stressDebt").value].join(","));
+  if ($("#flowsOn").checked){
+    const rows = [];
+    $$("#flowRows tr").forEach(tr => {
+      const y = tr.querySelector('[data-f="year"]').value.trim();
+      const a = tr.querySelector('[data-f="amt"]').value.trim();
+      if (y !== "" && a !== "")
+        rows.push([y, a, tr.querySelector('[data-f="rep"]').checked ? 1 : 0].join(":"));
+    });
+    q.push("l=" + rows.join(";"));
+    if (!$("#flowsReal").checked) q.push("ln=1");
+  }
+  const base = location.href.split("#")[0];
+  return q.length ? base + "#" + q.join("&") : base;
+}
+
+// Returns true if the fragment carried anything. Values are written straight into the
+// inputs; readState() already clamps everything, so a hand-edited link cannot get past it.
+function applyShareURL(){
+  const h = location.hash.replace(/^#/, "");
+  if (!h) return false;
+  let p;
+  try { p = new URLSearchParams(h); } catch(e){ return false; }
+  let any = false;
+
+  for (const k in SHARE_SIMPLE)
+    if (p.has(k)){ $("#" + SHARE_SIMPLE[k]).value = p.get(k); any = true; }
+
+  const putVec = (kind, csv) => {
+    const a = csv.split(",");
+    $$(`input[data-k="${kind}"]`).forEach(el => {
+      const v = a[+el.dataset.i];
+      if (v !== undefined && v !== "") el.value = v;
+    });
+  };
+  if (p.has("r")){ putVec("ret", p.get("r")); any = true; }
+  if (p.has("t")){ putVec("tax", p.get("t")); any = true; }
+  if (p.has("w")){
+    const a = p.get("w").split(",");
+    $$('input[data-k="w"]').forEach(el => {
+      const v = a[(+el.dataset.b) * 5 + (+el.dataset.i)];
+      if (v !== undefined && v !== "") el.value = v;
+    });
+    any = true;
+  }
+  if (p.has("s")){
+    const a = p.get("s").split(",");
+    $("#stressOn").checked = true;
+    if (a[0]) $("#stressYears").value = a[0];
+    if (a[1]) $("#stressEq").value    = a[1];
+    if (a[2]) $("#stressDebt").value  = a[2];
+    any = true;
+  }
+  if (p.has("l")){
+    $("#flowsOn").checked = true;
+    $("#flowsReal").checked = !p.has("ln");
+    const raw = p.get("l");
+    const rows = raw ? raw.split(";").filter(Boolean) : [];
+    while ($("#flowRows").rows.length < rows.length) addFlowRow();
+    rows.forEach((r, i) => {
+      const tr = $("#flowRows").rows[i];
+      if (!tr) return;
+      const a = r.split(":");
+      tr.querySelector('[data-f="year"]').value = a[0] || "";
+      tr.querySelector('[data-f="amt"]').value  = a[1] || "";
+      tr.querySelector('[data-f="rep"]').checked = a[2] === "1";
+    });
+    any = true;
+  }
+  return any;
+}
+
+// A link built before an edit would describe a different plan, so it is cleared on any change.
+function clearShare(){ $("#shareOut").innerHTML = ""; }
+
+$("#share").addEventListener("click", ()=>{
+  const url = shareURL();
+  try { history.replaceState(null, "", url); } catch(e){ location.hash = url.split("#")[1] || ""; }
+
+  const out = $("#shareOut");
+  out.innerHTML = "";
+  const box = document.createElement("input");
+  box.type = "text"; box.readOnly = true; box.className = "share-box";
+  box.setAttribute("aria-label", "Shareable link to this plan");
+  box.value = url;
+  const msg = document.createElement("span");
+  msg.className = "share-msg";
+  out.appendChild(box); out.appendChild(msg);
+  box.focus(); box.select();
+
+  // The clipboard API is unavailable on file:// in most browsers, so the box above is the
+  // fallback and stays selected either way.
+  const done = copied => msg.textContent = copied
+    ? "Copied. The address bar now holds this plan too."
+    : "Press Ctrl+C or Cmd+C to copy the selected link.";
+  if (navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(url).then(()=>done(true), ()=>done(false));
+  else {
+    let copied = false;
+    try { copied = document.execCommand("copy"); } catch(e){}
+    done(copied);
+  }
+});
+
 function syncStress(){
   const on = $("#stressOn").checked;
   ["#stressYears","#stressEq","#stressDebt"].forEach(id => $(id).disabled = !on);
@@ -1082,11 +1229,13 @@ function syncStress(){
     `Years 1\u2013${s.stress.years} run at ${s.stress.eq}% equity and ${s.stress.debt}% debt, then the rates above resume.`;
 }
 
-document.addEventListener("input", e => { if (e.target.matches("input")){ clearSolve(); syncStress(); syncFlows(); run(); } });
+document.addEventListener("input", e => { if (e.target.matches("input")){ clearSolve(); clearShare(); syncStress(); syncFlows(); run(); } });
 window.addEventListener("resize", () => { if (lastRun) renderChart(lastRun.res, lastRun.s, lastRun.view); });
 
 $("#reset").addEventListener("click", ()=>{
   clearSolve();
+  clearShare();
+  try { history.replaceState(null, "", location.href.split("#")[0]); } catch(e){}
   ["corpus","expense","inflation","horizon"].forEach(k => $("#"+k).value = DEFAULTS[k]);
   $("#mEF").value = DEFAULTS.mEF; $("#mB1").value = DEFAULTS.mB1; $("#mB2").value = DEFAULTS.mB2;
   $$('input[data-k="ret"]').forEach(el => el.value = DEFAULTS.ret[+el.dataset.i]);
@@ -1121,6 +1270,7 @@ $("#csv").addEventListener("click", ()=>{
 });
 
 resetFlowRows();
+applyShareURL();
 syncStress();
 syncFlows();
 run();

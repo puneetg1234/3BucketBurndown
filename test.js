@@ -34,8 +34,9 @@ const YEAR_IN_TEXT = /year (\d+)/;
 
 /* ------------------------------------------------------------------ harness */
 
-function boot() {
-  const dom = new JSDOM(fs.readFileSync(FILE, 'utf8'), { runScripts: 'dangerously' });
+function boot(hash) {
+  const url = 'https://example.test/index.html' + (hash ? '#' + hash : '');
+  const dom = new JSDOM(fs.readFileSync(FILE, 'utf8'), { runScripts: 'dangerously', url });
   const w = dom.window;
   w.SVGElement.prototype.getBoundingClientRect = () => ({ left: 0, width: 900, top: 0, height: 380 });
   w.URL.createObjectURL = () => 'blob:test';
@@ -109,7 +110,13 @@ function boot() {
       d.querySelectorAll('#flowRows tr').forEach((_, i) => api.flowRow(i, null, null, false));
       return api;
     },
-    reset() { return api.click('#reset'); }
+    reset() { return api.click('#reset'); },
+    setWeight(bucket, asset, val) {
+      const el = d.querySelector(`input[data-k="w"][data-b="${bucket}"][data-i="${asset}"]`);
+      el.value = val; fire(el); return api;
+    },
+    shareLink() { return api.el('#shareOut').querySelector('.share-box').value; },
+    fragment() { const u = api.shareLink(); return u.includes('#') ? u.split('#')[1] : ''; }
   };
   return api;
 }
@@ -505,7 +512,105 @@ function suiteFlows() {
   ok('a zero amount is ignored', p.snapshot() === clean);
 }
 
-/* -------------------------------------------------------------- 7. edges */
+/* ------------------------------------------------------- 7. shareable link */
+
+function suiteShare() {
+  group('Shareable link');
+  const p = boot();
+
+  ok('share button exists', !!p.el('#share'));
+  ok('no link shown until asked', p.el('#shareOut').innerHTML === '');
+
+  p.click('#share');
+  ok('clicking produces a link', /^https?:/.test(p.shareLink()), p.shareLink());
+  ok('an untouched plan needs no fragment', p.fragment() === '', p.shareLink());
+
+  /* A link has to reproduce the plan exactly, or it is worse than no link at all. */
+  function roundTrip(label, setup) {
+    const a = boot();
+    setup(a);
+    a.click('#share');
+    const frag = a.fragment();
+    const b = boot(frag);
+    ok('round trip: ' + label, a.snapshot() === b.snapshot(),
+      frag.length > 60 ? '(' + frag.length + ' chars)' : frag);
+    return frag;
+  }
+
+  roundTrip('headline numbers', a =>
+    a.set('#corpus', 200000000).set('#expense', 175000).set('#inflation', 6.5).set('#horizon', 35));
+
+  roundTrip('bucket sizes', a =>
+    a.set('#corpus', 200000000).set('#mEF', 6).set('#mB1', 24).set('#mB2', 60));
+
+  roundTrip('returns and tax rates', a =>
+    a.setAll('ret', 8).setAll('tax', 15));
+
+  roundTrip('asset weights', a => {
+    /* Deliberately non-uniform, and different in every bucket, so restoring the grid with
+       the wrong stride lands on the wrong number instead of an identical one. */
+    const grid = [
+      [10, 20, 30, 40, 0],
+      [0, 10, 20, 30, 40],
+      [40, 0, 10, 20, 30],
+      [30, 40, 0, 10, 20]
+    ];
+    a.set('#corpus', 200000000);
+    grid.forEach((row, b) => row.forEach((v, i) => a.setWeight(b, i, v)));
+  });
+
+  roundTrip('slump start', a =>
+    a.set('#corpus', 60000000).check('#stressOn', true)
+     .set('#stressYears', 5).set('#stressEq', -22).set('#stressDebt', 4.5));
+
+  roundTrip('cash flows, including more rows than the default three', a => {
+    /* Five filled rows, because the encoder compacts blanks away: only a plan with MORE
+       filled flows than the three default rows forces the restore to create new ones. */
+    a.set('#corpus', 200000000).check('#flowsOn', true);
+    a.click('#flowAdd').click('#flowAdd');
+    a.flowRow(0, 3, 5000000, false);
+    a.flowRow(1, 10, 300000, true);
+    a.flowRow(2, 4, -40000000, false);
+    a.flowRow(3, 15, -25000000, false);
+    a.flowRow(4, 6, 8000000, false);
+  });
+
+  roundTrip('literal-rupee flows', a => {
+    a.set('#corpus', 200000000).check('#flowsOn', true).check('#flowsReal', false);
+    a.flowRow(0, 8, 250000, true);
+  });
+
+  roundTrip('everything at once', a => {
+    a.set('#corpus', 200000000).set('#expense', 140000).set('#horizon', 32).set('#mB1', 24);
+    a.setAll('ret', 7.5);
+    a.check('#stressOn', true).set('#stressEq', -18);
+    a.check('#flowsOn', true).flowRow(0, 6, -2500000, false);
+  });
+
+  /* A link built before an edit describes a different plan. */
+  p.click('#share');
+  ok('a link is on screen', p.el('#shareOut').innerHTML !== '');
+  p.set('#corpus', 12345678);
+  ok('editing an input clears the stale link', p.el('#shareOut').innerHTML === '');
+  p.click('#share');
+  p.reset();
+  ok('reset clears the link', p.el('#shareOut').innerHTML === '');
+
+  /* Hand-edited or truncated fragments must not take the page down. */
+  const junk = ['c=notanumber', 'w=1,2,3', 's=', 'l=::;;', 'l=9:1000:1&ln=1', 'c=1e999&h=-5',
+    '%%%', 'r=,,,,', 'l=5:100:1;6'];
+  let threw = null, rendered = true;
+  for (const frag of junk) {
+    try {
+      const b = boot(frag);
+      if (!b.verdict() || b.rows().length < 1) rendered = false;
+    } catch (e) { threw = e; }
+  }
+  ok('malformed fragments do not break the page', !threw && rendered,
+    threw ? String(threw).slice(0, 110) : `(${junk.length} variants)`);
+}
+
+/* -------------------------------------------------------------- 8. edges */
 
 function suiteEdges() {
   group('Edge cases');
@@ -580,6 +685,7 @@ suiteModel();
 suiteSolver();
 suiteSlump();
 suiteFlows();
+suiteShare();
 suiteEdges();
 
 const secs = ((Date.now() - started) / 1000).toFixed(1);

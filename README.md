@@ -33,6 +33,10 @@ What the suite pins down:
   longer slump never better. The solvers use bisection, which is only valid if these hold.
 - **Solver correctness.** The answer clears the horizon, and one rounding step the other way
   does not; solving each direction in turn returns to where it started.
+- **Share links round-trip.** A plan is encoded into the URL, reloaded from that URL in a
+  fresh page, and the two are asserted identical — headline numbers, bucket sizes, returns,
+  tax, the weight grid, slump settings and cash flows, together and separately. Malformed
+  fragments must not break the page.
 - Plus cash-flow timing and recurrence, the today's-rupees toggle, CSV export with and
   without the optional columns, and a spread of edge cases.
 
