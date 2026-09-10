@@ -158,6 +158,17 @@ footer h4+h4{margin-top:14px}
 fieldset.off .field label{color:var(--muted);opacity:.65}
 input[type=number]:disabled{background:#f4f6f5;color:var(--muted);cursor:not-allowed}
 .stress-echo{color:var(--muted);font-size:12.5px;margin:2px 0 0}
+
+/* ---------- lumpy cash flows ---------- */
+table.flows{width:100%;border-collapse:collapse;font-size:12.5px}
+table.flows thead th{color:var(--muted);font-weight:500;font-size:11.5px;line-height:1.2;
+  vertical-align:bottom;padding:0 4px 6px;text-align:center}
+table.flows thead th:first-child{text-align:left}
+table.flows td{padding:3px 4px;text-align:center}
+table.flows input[data-f="year"]{min-width:54px}
+table.flows input[data-f="amt"]{min-width:112px;text-align:right}
+table.flows input[type=checkbox]{margin:0}
+table.flows tbody tr:last-child td{padding-bottom:2px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -166,7 +177,13 @@ input[type=number]:disabled{background:#f4f6f5;color:var(--muted);cursor:not-all
 
   <header class="masthead">
     <h1>Three-bucket Burndown Model</h1>
-	<p><b>Simulates a retirement corpus burndown.</b><br>Corpus is split across an Emergency Fund and three buckets. Each bucket refills once a year from the one behind it. Emergency fund is sealed with no withdrawals. Redemptions are taxed.<br><br>Use <b>Additional Solver</b> in the sidebar to work backwards.</p>
+	<p><b>Simulates a retirement corpus burndown.</b>
+    <br>- Corpus is split across an Emergency Fund and three buckets. Each bucket refills once a year from the one behind it.
+    Emergency fund is sealed with no withdrawals. Redemptions are taxed.
+    <br>- Optionally use <b>Additional Solver</b> to work backwards.
+    <br>- Optionally use <b>Slump Start</b> to factor-in current market returns.
+    <br>- Optionally use <b>Lumpy Cash Flows</b> to account for any non-regular future cashflows.
+    <br>- <i>Best viewed in laptop browser; not mobile friendly UI.</i></p>
   </header>
 
   <div class="layout">
@@ -174,31 +191,31 @@ input[type=number]:disabled{background:#f4f6f5;color:var(--muted);cursor:not-all
     <!-- ============ INPUTS ============ -->
     <aside class="rail">
       <div class="rail-inner">
-        <h2><b>Your plan</b></h2>
+        <h2>Your plan</h2>
         <p class="hint">Everything recalculates as you type.</p>
 
         <fieldset>
-          <legend><b>Money</b></legend>
+          <legend>Money</legend>
           <div class="field">
-            <label for="corpus"><b>Retirement corpus</b><span class="sub">Withdrawals only — leave out goal money; Net of any outstanding loans</span></label>
+            <label for="corpus">Retirement corpus<span class="sub">Withdrawals only — leave out goal money; Net of any outstanding loans</span></label>
             <input id="corpus" type="number" min="0" step="100000" value="10000000">
           </div>
           <div class="field">
-            <label for="expense"><b>Monthly expenses</b><span class="sub">Over and above pension or rent</span></label>
+            <label for="expense">Monthly expenses<span class="sub">Over and above pension or rent</span></label>
             <input id="expense" type="number" min="0" step="5000" value="100000">
           </div>
           <div class="field">
-            <label for="inflation"><b>Inflation</b><span class="sub">% a year, applied to the spend</span></label>
+            <label for="inflation">Inflation<span class="sub">% a year, applied to the spend</span></label>
             <input id="inflation" type="number" step="0.1" value="7">
           </div>
           <div class="field">
-            <label for="horizon"><b>Years to project</b></label>
+            <label for="horizon">Years to project</label>
             <input id="horizon" type="number" min="2" max="90" step="1" value="40">
           </div>
         </fieldset>
 
         <fieldset>
-          <legend><b>Additional Solver (Optional)</b></legend>
+          <legend>Additional Solver (Optional)</legend>
           <p class="hint">Model backwards from the tenure horizon above, keeping everything else as frozen.<br>(read notes below for explanation)</p>
           <div class="solve-actions">
             <button class="btn" id="solveSpend" type="button">Highest monthly spend</button>
@@ -209,21 +226,21 @@ input[type=number]:disabled{background:#f4f6f5;color:var(--muted);cursor:not-all
         </fieldset>
 
         <fieldset>
-          <legend><b>Opening sizes, in unit months of expenses</b></legend>
+          <legend>Opening sizes, in unit months of expenses</legend>
           <div class="field">
-            <label for="mEF"><span class="swatch" style="background:var(--ef)"></span><b>Emergency Fund</b><span class="sub">Sealed — no withdrawals</span></label>
+            <label for="mEF"><span class="swatch" style="background:var(--ef)"></span>Emergency Fund<span class="sub">Sealed-no withdrawals</span></label>
             <input id="mEF" type="number" min="0" step="1" value="12">
           </div>
           <div class="field">
-            <label for="mB1"><span class="swatch" style="background:var(--b1)"></span><b>Bucket 1</b><span class="sub">monthly withdrawals</span></label>
+            <label for="mB1"><span class="swatch" style="background:var(--b1)"></span>Bucket 1<span class="sub">monthly withdrawals</span></label>
             <input id="mB1" type="number" min="0" step="1" value="18">
           </div>
           <div class="field">
-            <label for="mB2"><span class="swatch" style="background:var(--b2)"></span><b>Bucket 2</b><span class="sub">refills Bucket 1 yearly</span></label>
+            <label for="mB2"><span class="swatch" style="background:var(--b2)"></span>Bucket 2<span class="sub">refills Bucket 1 yearly</span></label>
             <input id="mB2" type="number" min="0" step="1" value="48">
           </div>
           <div class="field">
-            <label for="mB3"><span class="swatch" style="background:var(--b3)"></span><b>Bucket 3</b><span class="sub">refills Bucket 2 yearly</span></label>
+            <label for="mB3"><span class="swatch" style="background:var(--b3)"></span>Bucket 3<span class="sub">refills Bucket 2 yearly</span></label>
             <input id="mB3" type="text" value="whatever is left" disabled
               style="width:100%;font:inherit;font-size:13px;text-align:right;padding:9px 10px;border:1px dashed var(--rule);border-radius:2px;background:transparent;color:var(--muted)">
           </div>
@@ -231,7 +248,7 @@ input[type=number]:disabled{background:#f4f6f5;color:var(--muted);cursor:not-all
         </fieldset>
 
         <fieldset>
-          <legend><b>Asset mix, Weights and Tax Assumptions</b></legend>
+          <legend>Asset mix, Weights and Tax Assumptions</legend>
           <div class="matrix-scroll">
             <table class="matrix" id="matrix">
               <thead>
@@ -247,7 +264,7 @@ input[type=number]:disabled{background:#f4f6f5;color:var(--muted);cursor:not-all
               </thead>
               <tbody>
                 <tr>
-                  <th><b>Return %</b><br>pre-tax</th>
+                  <th>Return %<br>pre-tax</th>
                   <td><input class="narrow" data-k="ret" data-i="0" type="number" min="-99" max="100" step="0.1" value="9"></td>
                   <td><input class="narrow" data-k="ret" data-i="1" type="number" min="-99" max="100" step="0.1" value="10"></td>
                   <td><input class="narrow" data-k="ret" data-i="2" type="number" min="-99" max="100" step="0.1" value="6"></td>
@@ -256,7 +273,7 @@ input[type=number]:disabled{background:#f4f6f5;color:var(--muted);cursor:not-all
                   <td></td>
                 </tr>
                 <tr>
-                  <th><b>Tax %</b><br>assumes long-term</th>
+                  <th>Tax %<br>assumes long-term</th>
                   <td><input class="narrow" data-k="tax" data-i="0" type="number" min="0" max="100" step="0.5" value="12.5"></td>
                   <td><input class="narrow" data-k="tax" data-i="1" type="number" min="0" max="100" step="0.5" value="12.5"></td>
                   <td><input class="narrow" data-k="tax" data-i="2" type="number" min="0" max="100" step="0.5" value="20"></td>
@@ -265,7 +282,7 @@ input[type=number]:disabled{background:#f4f6f5;color:var(--muted);cursor:not-all
                   <td></td>
                 </tr>
                 <tr class="sep">
-                  <th><span class="swatch" style="background:var(--ef)"></span><b>Emergency Fund</b></th>
+                  <th><span class="swatch" style="background:var(--ef)"></span>Emergency Fund</th>
                   <td><input class="narrow" data-k="w" data-b="0" data-i="0" type="number" min="0" step="5" value="0"></td>
                   <td><input class="narrow" data-k="w" data-b="0" data-i="1" type="number" min="0" step="5" value="0"></td>
                   <td><input class="narrow" data-k="w" data-b="0" data-i="2" type="number" min="0" step="5" value="0"></td>
@@ -274,7 +291,7 @@ input[type=number]:disabled{background:#f4f6f5;color:var(--muted);cursor:not-all
                   <td class="sum" data-sum="0">100</td>
                 </tr>
                 <tr>
-                  <th><span class="swatch" style="background:var(--b1)"></span><b>Bucket 1</b></th>
+                  <th><span class="swatch" style="background:var(--b1)"></span>Bucket 1</th>
                   <td><input class="narrow" data-k="w" data-b="1" data-i="0" type="number" min="0" step="5" value="0"></td>
                   <td><input class="narrow" data-k="w" data-b="1" data-i="1" type="number" min="0" step="5" value="0"></td>
                   <td><input class="narrow" data-k="w" data-b="1" data-i="2" type="number" min="0" step="5" value="0"></td>
@@ -283,7 +300,7 @@ input[type=number]:disabled{background:#f4f6f5;color:var(--muted);cursor:not-all
                   <td class="sum" data-sum="1">100</td>
                 </tr>
                 <tr>
-                  <th><span class="swatch" style="background:var(--b2)"></span><b>Bucket 2</b></th>
+                  <th><span class="swatch" style="background:var(--b2)"></span>Bucket 2</th>
                   <td><input class="narrow" data-k="w" data-b="2" data-i="0" type="number" min="0" step="5" value="20"></td>
                   <td><input class="narrow" data-k="w" data-b="2" data-i="1" type="number" min="0" step="5" value="0"></td>
                   <td><input class="narrow" data-k="w" data-b="2" data-i="2" type="number" min="0" step="5" value="80"></td>
@@ -292,7 +309,7 @@ input[type=number]:disabled{background:#f4f6f5;color:var(--muted);cursor:not-all
                   <td class="sum" data-sum="2">100</td>
                 </tr>
                 <tr>
-                  <th><span class="swatch" style="background:var(--b3)"></span><b>Bucket 3</b></th>
+                  <th><span class="swatch" style="background:var(--b3)"></span>Bucket 3</th>
                   <td><input class="narrow" data-k="w" data-b="3" data-i="0" type="number" min="0" step="5" value="0"></td>
                   <td><input class="narrow" data-k="w" data-b="3" data-i="1" type="number" min="0" step="5" value="80"></td>
                   <td><input class="narrow" data-k="w" data-b="3" data-i="2" type="number" min="0" step="5" value="20"></td>
@@ -307,25 +324,50 @@ input[type=number]:disabled{background:#f4f6f5;color:var(--muted);cursor:not-all
         </fieldset>
 
         <fieldset id="stressBox" class="off">
-          <legend><b>Bad Stressful Start (Optional)</b></legend>
-          <p class="hint">Select this if your current market returns are lower than expected long term market projected returns.</p>
+          <legend>Slump Start (Optional)</legend>
+          <p class="hint">Select this if your current market returns are lower(or heigher) than expected long term projected market returns.</p>
           <label class="stress-toggle">
             <input type="checkbox" id="stressOn">
-            <span><b>Open with a slump</b><span class="sub">Overrides the returns above for the first few years only, then resets them back to projected values. OFF by default.</span></span>
+            <span>Open with a slump<span class="sub">Overrides the returns above for the first few years only, then resets them back to the projected values. OFF by default.</span></span>
           </label>
           <div class="field">
-            <label for="stressYears"><b>How long</b><span class="sub">years from the start</span></label>
+            <label for="stressYears">How long<span class="sub">years from the start</span></label>
             <input id="stressYears" type="number" min="1" max="20" step="1" value="3" disabled>
           </div>
           <div class="field">
-            <label for="stressEq"><b>Equity return</b><span class="sub">% a year, both equity columns</span></label>
+            <label for="stressEq">Equity return<span class="sub">% a year, both equity columns</span></label>
             <input id="stressEq" type="number" min="-99" max="100" step="1" value="-10" disabled>
           </div>
           <div class="field">
-            <label for="stressDebt"><b>Debt return</b><span class="sub">% a year, all three debt columns</span></label>
+            <label for="stressDebt">Debt return<span class="sub">% a year, all three debt columns</span></label>
             <input id="stressDebt" type="number" min="-99" max="100" step="0.5" value="6" disabled>
           </div>
           <p class="stress-echo" id="stressEcho"></p>
+        </fieldset>
+
+        <fieldset id="flowBox" class="off">
+          <legend>Lumpy Cash Flows (Optional)</legend>
+          <p class="hint">One-off or repeating money in and out, on top of the monthly spend.<i> (e.g pension/rent starting later, property sale, wedding, car etc).</i></p>
+          <label class="stress-toggle">
+            <input type="checkbox" id="flowsOn">
+            <span>Apply cash flows<span class="sub">Positive is money coming in, negative is money going out. Blank rows are ignored. OFF by default.</span></span>
+          </label>
+          <div class="matrix-scroll">
+            <table class="flows" id="flowTable">
+              <thead>
+                <tr><th>Year</th><th>Amount</th><th>Every<br>year after</th></tr>
+              </thead>
+              <tbody id="flowRows"></tbody>
+            </table>
+          </div>
+          <div class="solve-actions" style="margin-top:8px">
+            <button class="btn" id="flowAdd" type="button" disabled>Add a row</button>
+          </div>
+          <label class="checkrow">
+            <input type="checkbox" id="flowsReal" checked disabled>
+            <span><b style="color:var(--ink)">Amounts are in today's rupees</b><br>Each amount is grows by the inflation rate before it is applied, similar to how monthly spend inflates. Uncheck to enter the actual rupee figure for that year.</span>
+          </label>
+          <p class="stress-echo" id="flowEcho"></p>
         </fieldset>
 
         <div class="rail-actions">
@@ -343,7 +385,7 @@ input[type=number]:disabled{background:#f4f6f5;color:var(--muted);cursor:not-all
       <section class="chart-card">
         <div class="chart-head">
           <h3>Total corpus at each year end</h3>
-          <span style="color:var(--muted);font-size:12.5px">Actual pre-tax rupee balances, sealed fund included — only spending grows with inflation</span>
+          <span style="color:var(--muted);font-size:12.5px">Actual pre-tax rupee balances, sealed fund included-only spending grows with inflation</span>
         </div>
         <svg id="chart" viewBox="0 0 900 380" preserveAspectRatio="xMidYMid meet" role="img"
              aria-label="Stacked area chart of the corpus by bucket over time"></svg>
@@ -357,7 +399,7 @@ input[type=number]:disabled{background:#f4f6f5;color:var(--muted);cursor:not-all
       </section>
 
       <div class="cascade" id="cascade"></div>
-      <p class="cascade-note">Money moves right to left once a year: Bucket 2 refills Bucket 1 first, then Bucket 3 tops Bucket 2 back up. Spending leaves Bucket 1 every month. The emergency fund sits outside the chain — it is funded once and left alone, and is never counted as spendable.</p>
+      <p class="cascade-note">Money moves right to left once a year: Bucket 2 refills Bucket 1 first, then Bucket 3 tops Bucket 2 back up. Spending leaves Bucket 1 every month. The emergency fund sits outside the chain-it is funded once and left alone, and is never counted as spendable.</p>
 
       <div class="table-head">
         <h3>Year-end balances</h3>
@@ -367,7 +409,7 @@ input[type=number]:disabled{background:#f4f6f5;color:var(--muted);cursor:not-all
         <table class="years" id="years">
           <thead>
             <tr>
-              <th>Year</th><th>Monthly spend<br>(inflated)</th><th>Emergency<br>fund</th><th>Bucket 1</th>
+              <th>Year</th><th>Monthly spend<br>(inflated)</th><th id="flowHead" hidden>Cash<br>flow</th><th>Emergency<br>fund</th><th>Bucket 1</th>
               <th>Bucket 2</th><th>Bucket 3</th><th>Spendable<br>(B1+B2+B3)</th><th>Total Corpus<br>(incl. emergency fund)</th><th>Tax paid</th>
             </tr>
           </thead>
@@ -379,34 +421,44 @@ input[type=number]:disabled{background:#f4f6f5;color:var(--muted);cursor:not-all
         <h3>Important Notes</h3>
         
 		<h4>What happens each year</h4>
-        <p>Every month Bucket&nbsp;1 redeems enough to hand you that month's spending. All four buckets then compound one month at their weighted gross return. At the year end Bucket&nbsp;2 refills Bucket&nbsp;1 back to its target out of its own existing holdings, and Bucket&nbsp;3 then tops Bucket&nbsp;2 back up to its own target — targets being the Bucket&nbsp;1 and Bucket&nbsp;2 sizes you set, measured in months of the coming year's spending, so each year opens fully funded for the year ahead. If Bucket&nbsp;2 cannot cover the Bucket&nbsp;1 refill on its own, Bucket&nbsp;3 backstops it. Nothing refills Bucket&nbsp;3.</p>
-        <p>The emergency fund is funded once at the start and never touched again. It compounds at its own weighted return for the whole tenure and is never redeemed, so no tax is ever charged on it — in reality redeeming it would be taxed, so read its balance as a gross figure. If Bucket&nbsp;1 empties mid-year the shortfall is pulled early from Bucket&nbsp;2 and then Bucket&nbsp;3 — never from the emergency fund.</p>
-        <p>The emergency fund is filled <i>before</i> Buckets&nbsp;1 and&nbsp;2, so a corpus that cannot cover every opening bucket size would leave the later buckets short. And because it is sealed, a bigger emergency fund shortens how long total spendable amount lasts. E.g: on the default plan, going from no fund to 24 months of one costs about two years of runway. "Total Corpus" figure here includes it though.</p>
+        <p>Monthly expenses are funded by redemptions from Bucket&nbsp;1. All four buckets then compound monthly at their respective weighted gross return. At the year end Bucket&nbsp;2 refills Bucket&nbsp;1 back to its target by redemptions of it's own holdings. Bucket&nbsp;3 then refills Bucket&nbsp;2 back up to its own target.</p>
+        <p>So each year opens fully funded for the year ahead. If Bucket&nbsp;2 cannot cover the Bucket&nbsp;1 refill on its own, Bucket&nbsp;3 backstops it. Nothing refills Bucket&nbsp;3. A corpus that cannot cover every opening bucket size would leave the later buckets short.</p>
+        <p>The emergency fund is funded once at the start(even <i>before</i> Buckets&nbsp;1 and&nbsp;2 are filled) and is never redeemed. It compounds at its own weighted return. And because it is sealed, a bigger emergency fund shortens how long total spendable amount lasts. E.g: on the default plan, going from no fund to 24 months of one costs about two years of runway. "Total Corpus" figure includes Emergency fund.</p>
+        <p>In case, if Bucket&nbsp;1 empties mid-year, the shortfall is pulled early from Bucket&nbsp;2 and then Bucket&nbsp;3; never from the emergency fund.</p>
+        <p><b>Assumption:</b> Returns are assumed to be steady every year; real markets do not provide steady returns. See <i>Slump Start</i>below.</p>
 		
-        <h4>How tax is charged</h4>
-        <p>Tax applies to redemptions, not to paper growth. Each bucket carries a cost basis, and when it redeems, only the gain portion of that redemption is taxed at the bucket's weighted rate. Delivering a given amount of spendable cash therefore means redeeming slightly more than that amount. Early on the gain portion is small and the effective bite is near zero; as unrealised gains build up it climbs toward the bucket's headline rate.</p>
-        <p>Every balance on this page — chart, table and CSV — is pre-tax. Unrealised gains inside a bucket have not been taxed, so the corpus at the end of the projection is worth less than it reads once you actually redeem it. Gains are tracked per bucket on an average-cost basis rather than per holding, so switching between asset classes inside a single bucket is free here; real rebalancing inside a bucket would be taxed. Losses are not carried forward or set off.</p>
-        <p>The defaults are the Indian long-term rates: 12.5% on equity, 20% on bonds and gilts, and a 30% slab on ultra-short and liquid holdings. The ₹1.25 lakh a year equity exemption is not modelled — it is worth at most about ₹15,600 a year, which changes nothing material over a long projection. Override any rate in the table above.</p>
-        <p><b>Assumption:</b> The opening corpus is assumed to be freshly invested, so it starts with no embedded gains. And hence no taxes as well. If your actual holdings already carry large unrealised gains, real tax in the early years will be higher than shown. <br> Also, if you are re-structuring your existing portfolio to follow this bucket strategy, consider post-tax final amount as the opening corpus for this calculation.</p>
+    <h4>Funding tax payments</h4>
+        <p>Taxs are paid for redemptions only. Each bucket carries a cost basis, and when it redeems, only the gain portion of that redemption is taxed at the bucket's weighted rate. Following FIFO. Delivering a given amount of spendable cash therefore means redeeming slightly more than that amount - tax-bite. Early years, the gain portion is small and the effective tax-bite is minimal. But, over time, as unrealised gains build up, the tax-bite for that bucket increases. This is not a tax optimixation strategy.</p>
+        <p>Every balance on this page — chart, table and CSV — is pre-tax. Unrealised gains inside a bucket are not net of tases. So the corpus at the end of the projection would be much less at redemption.</p>
+        <p>Gains are tracked per bucket on an average-cost basis rather than per holding. Thsi makes Switching between asset classes inside a single bucket free of taxes. Only real rebalancing inside a bucket would be taxed. Losses are not carried forward or set off.</p>
+        <p>The ₹1.25 lakh a year equity exemption is not modelled — too small to make any material change over long term (₹15,600 a year)</p>
+        <p>If you are re-structuring your existing portfolio to follow this bucket strategy, consider post-tax final amount as the opening corpus for this calculation.</p>
+        <p><b>Assumption:</b> The opening corpus is assumed to be freshly invested, so it starts with no embedded gains. And hence no taxes as well. If your actual holdings already carry large unrealised gains, real tax in the early years will be higher than shown. </p>
+        
+    
+    <h4>Inflation</h4>
+        <p>Inflation applies to (1)the monthly spends (so it increases every year) and (2)the money outflows if <i>>amounts are in today's rupees</i> is unticked . Because Buckets&nbsp;1 and&nbsp;2 are defined in months of spending, their refill targets follow it up. Balances by-themselves are never inflation-adjusted.</p>
 
 		<h4>Solving backwards (Additional Solver - Optional)</h4>
-        <p>The two solve buttons search for the number that can just barely satisfy the tenure horizon, keeping every other input you specified as frozen. They run the same model the rest of the page runs, so the answers already account for tax on each refill, for the emergency fund being filled first, and for the Bucket&nbsp;1 and&nbsp;2 targets rising with inflation.</p>
-		<p><b>Highest monthly spend:</b> largest amount available for spending with given corpus and tenure.<br><b>Smallest corpus:</b> Lowest corpus needed to fund the given monthly expense and tenure.</p>
-		<p>Note: Both answers are rounded the safe way — the spend down to the nearest ₹500, the corpus up to the nearest ₹50,000 — and then re-checked against the model, so the figure shown always clears rather than sitting a rupee on the wrong side of the line. Changing any input clears the answer, because a solved number stops being true the moment the inputs behind it move.</p>
+        <p>OFF by default; the two solve buttons search for the number that can just barely satisfy the tenure horizon, keeping every other input you specified as frozen. They run the same model the rest of the page runs, so the answers already account for tax on each refill, for the emergency fund being filled first, and for the Bucket&nbsp;1 and&nbsp;2 targets rising with inflation.</p>
+		    <p><b>Highest monthly spend:</b> largest amount available for spending with given corpus and tenure.<br><b>Smallest corpus:</b> Lowest corpus needed to fund the given monthly expense and tenure.</p>
+		    <p>Note: Both answers are rounded the safe way — the spend down to the nearest ₹500, the corpus up to the nearest ₹50,000 — and then re-checked against the model, so the figure shown always clears rather than sitting a rupee on the wrong side of the line. Changing any input clears the answer, because a solved number stops being true the moment the inputs behind it move.</p>
         <p>Read them as the edge of the cliff, not as a target. A corpus that <i>just</i> funds the tenure has no margin for a bad first decade, for a year of spending you did not plan, or for living longer than the tenure you input. The steady-return assumption below makes that edge look far firmer than it is.</p>
 
-        <h4>Bad Stressful Start (Optional)</h4>
-        <p>OFF by default: Enabling this makes the first few years returns forced to what you set here, after which the matrix rates resume for the rest of the projection. Both equity columns take the equity figure and all three debt columns take the debt figure, the emergency fund included.</p>
-        <p>This exists because a steady projection cannot show what the buckets are for. On flat returns, money parked in Bucket&nbsp;1 or&nbsp;2 simply earns less than it would in Bucket&nbsp;3, so the model rewards shrinking both towards zero — the opposite of the strategy this page is built around.</p>
-        <p>Ticking the box does not simply reverse that, and it is worth being plain about what it does show. A mild slump still favours small buckets: the low return on all those parked months compounds across the whole tenure, while the protection only lasts as long as the slump does. It is the severe and prolonged cases where the structure earns its keep. Somewhere around a 40% annual fall held for three years, or 30% held for five, the buckets begin buying two to three extra years of runway, because Bucket&nbsp;3 is no longer being liquidated at the bottom to fund the monthly spend. Set your own numbers, then run the same plan again with both bucket sizes at zero and compare — that comparison is the honest way to decide whether the structure is worth its cost to you.</p>
-        <p>Inflation is unchanged during the slump. Note that this is being generous — the awkward history tells us that prices will keep rising while markets fall.</p>
-        <p>The two solve buttons respect the setting. With the box ticked, "smallest corpus" answers the more useful question: the least you need to survive a bad opening rather than an average one.</p>
+    <h4>Slump Start (Optional)</h4>
+        <p>OFF by default: Enabling this forces the first few years returns to what you set here, after which the matrix rates resume for the rest of the projection. Both equity columns take the equity figure and all three debt columns take the debt figure.</p>
+        <p>Inflation is unchanged during the slump. Note that this is being generous — prices will still keep rising while markets fall.</p>
+        <p>The two solve buttons respect this setting. With the box ticked, "smallest corpus" will answer a more useful question: <i>What is the least amount I need to survive a bad opening v/s an average one.</i></p>
 
-        <h4>Inflation</h4>
-        <p>Inflation applies only to the monthly spends, which increases every year. Because Buckets&nbsp;1 and&nbsp;2 are defined in months of spending, their refill targets follow it up. Balances by-themselves are never inflation-adjusted.</p>
+    <h4>Lumpy Cash Flows (Optional)</h4>
+        <p>OFF by default. Each row is a year, an amount, and whether it repeats. Positive amount is money arriving, negative is money leaving. Gets added to monthly spend rather than replacing any part of it. <i>Every year after</i> makes the amount recur from that year to the end of the projection, e.g how a pension, annuity or a rent is entered; leaving it unticked makes it a single event.</p>
+        <p><b>Money inflow</b> lands in Bucket&nbsp;3 with a fresh cost basis, because it is not needed this month and Bucket&nbsp;3 is where unallocated corpus already sits. <b>Money outflow</b> is redeemed in the same order as spending; Bucket&nbsp;1 first, then&nbsp;2, then&nbsp;3. Pays capital gains tax like any other redemption. A ten lakh outflow therefore costs more than ten lakhs, and the gap widens as unrealised gains build up. </p>
+        <p>With <i>amounts are in today's rupees</i> ticked, each figure grows as per inflation rate before being applied, similar to monthly spend. E.g. a car entered as Rs. 15,00,000 in year&nbsp;10 is the cost of that car in today, Rather than the rupee figure you would actually spent in future. Untick it to enter the literal amount for that year. This would be the right setting for a fixed inflow like pension which does not increase with inflation.</p>
+        <p>In case an outflow cannot be funded, it counts against the year exactly as unfunded spending does and the projection stops there.</p>
+        <p>Also, both the solve buttons take the flows into account. In this case, "smallest corpus" answers a sharper question: <i>What is the least amount I need, given the property sale I am expecting in 'x' years, OR the wedding you I need to pay for?</i>.</p>
 
-        <p style="margin-top:14px">It's merely a planning template, no advice provided. <br>Assumption: Returns are assumed to be steady every year; real markets do not provide steady returns.</p>
-		<p style="margin-top:14px">Send feedback and comments to <b>puneetg123@yahoo.com</b></p>
+        <p style="margin-top:14px"><b>It's merely a planning template, no advice provided.</b><br></p>
+		<p style="margin-top:14px">Send feedback and comments to <mailto:>puneetg123@yahoo.com</mailto:></p>
       </footer>
     </main>
   </div>
@@ -429,6 +481,7 @@ const DEFAULTS = {
   mEF:12, mB1:18, mB2:48,
   ret:[9,10,6,5.5,5], tax:[12.5,12.5,20,30,30],
   stressYears:3, stressEq:-10, stressDebt:6,
+  flowRows:3,
   w:[[0,0,0,0,100],[0,0,0,100,0],[20,0,80,0,0],[0,80,20,0,0]]
 };
 
@@ -467,12 +520,37 @@ function readState(){
 
   // Null unless the box is ticked. Everything downstream keys off that, so an unticked box
   // leaves the model on exactly the path it took before this feature existed.
+  // Null unless the box is ticked AND at least one row carries a real amount, so a ticked
+  // box with nothing filled in is just as inert as an unticked one.
+  s.flows = null;
+  if ($("#flowsOn").checked){
+    const rows = [];
+    $$("#flowRows tr").forEach(tr => {
+      const y = Math.round(num(tr.querySelector('[data-f="year"]')));
+      const a = num(tr.querySelector('[data-f="amt"]'));
+      if (y >= 1 && y <= 90 && Math.abs(a) > 0.5)
+        rows.push({ year:y, amt:a, rep: tr.querySelector('[data-f="rep"]').checked });
+    });
+    if (rows.length) s.flows = { rows, real: $("#flowsReal").checked };
+  }
+
   s.stress = $("#stressOn").checked ? {
     years: Math.max(1, Math.min(20, Math.round(num($("#stressYears")) || 1))),
     eq:    Math.max(-99, Math.min(100, num($("#stressEq")))),
     debt:  Math.max(-99, Math.min(100, num($("#stressDebt"))))
   } : null;
   return s;
+}
+
+// net cash flow landing in projection year y, positive in and negative out
+function flowFor(s, y){
+  if (!s.flows) return 0;
+  let t = 0;
+  for (const f of s.flows.rows){
+    if (f.rep ? y >= f.year : y === f.year)
+      t += s.flows.real ? f.amt * Math.pow(1 + s.inflation, y - 1) : f.amt;
+  }
+  return t;
 }
 
 // the five asset columns, weighted by one bucket's row
@@ -528,7 +606,8 @@ function simulate(s){
   open.push(rem); // Bucket 3 receives the genuine remaining corpus
   const bk = open.map((v,i)=> makeBucket(v, stats[i].gross, stats[i].taxw));
 
-  const snapshot = (year, monthly, taxThisYear, shortfall) => ({
+  const snapshot = (year, monthly, taxThisYear, shortfall, flow) => ({
+    flow: flow || 0,
     year, monthly, bal: bk.map(b=>b.v),
     total: bk.reduce((a,b)=>a+b.v,0), tax:taxThisYear, shortfall
   });
@@ -545,7 +624,25 @@ function simulate(s){
     }
 
     const monthly = s.expense * Math.pow(1 + s.inflation, y-1);
-    let shortfall = 0;
+    let shortfall = 0, flowThisYear = 0;
+
+    // Lumpy flows land at the start of the year, before any spending. Money in arrives in
+    // Bucket 3 as fresh cost basis, because it is not needed this month and Bucket 3 is where
+    // unallocated corpus already lives. Money out is redeemed in the same order spending uses,
+    // so it pays capital gains tax like any other redemption — a ten lakh outflow costs more
+    // than ten lakhs. Anything that cannot be funded counts against the year like a shortfall.
+    if (s.flows){
+      flowThisYear = flowFor(s, y);
+      if (flowThisYear > 0) deposit(bk[3], flowThisYear);
+      else if (flowThisYear < 0){
+        let need = -flowThisYear;
+        for (const i of [1,2,3]){
+          need -= redeem(bk[i], need);
+          if (need <= 0.5) break;
+        }
+        shortfall += Math.max(need, 0);
+      }
+    }
 
     for (let m = 0; m < 12; m++){
       let need = monthly;
@@ -576,7 +673,7 @@ function simulate(s){
     if (bk[2].v < tgt2) deposit(bk[2], redeem(bk[3], tgt2 - bk[2].v));
 
     const taxTotal = bk.reduce((a,b)=>a+b.taxPaid,0);
-    rows.push(snapshot(y, monthly, taxTotal - taxSoFar, shortfall));
+    rows.push(snapshot(y, monthly, taxTotal - taxSoFar, shortfall, flowThisYear));
     taxSoFar = taxTotal;
     if (shortfall > 0.5) break;
   }
@@ -745,6 +842,7 @@ function renderCascade(res, view){
 
 /* ---------- table ---------- */
 function renderTable(res, s, view){
+  $("#flowHead").hidden = !s.flows;
   // round once, then total the rounded cells, so each row visibly adds up on screen
   $("#years").tBodies[0].innerHTML = view.map(r=>{
     const c = r.bal.map(v => Math.round(v));
@@ -753,7 +851,7 @@ function renderTable(res, s, view){
     <tr class="${[res.failYear === r.year ? "dry":"",
                   s.stress && r.year >= 1 && r.year <= s.stress.years ? "stressed":""].filter(Boolean).join(" ")}">
       <th scope="row">${r.year === 0 ? "Start" : r.year}</th>
-      <td>${full(r.monthly)}</td>
+      <td>${full(r.monthly)}</td>${s.flows ? `<td>${r.flow ? full(r.flow) : "—"}</td>` : ""}
       ${c.map(v=>`<td>${full(v)}</td>`).join("")}
       <td>${full(spendable)}</td>
       <td>${full(c[0] + spendable)}</td>
@@ -851,6 +949,7 @@ function niceStep(raw){
     if (guide){ guide.setAttribute("x1",best.x); guide.setAttribute("x2",best.x); guide.setAttribute("opacity","0.35"); }
     tip.innerHTML = `<b>${best.r.year === 0 ? "Opening split" : "Year "+best.r.year}</b> · spending ${money(best.r.monthly)}/mo`
       + best.r.bal.map((v,i)=>`<div class="row"><span><i style="background:${HEX[i]}"></i>${NAMES[i]}</span><span>${money(v)}</span></div>`).join("")
+      + (best.r.flow ? `<div class="row"><span>Cash flow</span><span>${money(best.r.flow)}</span></div>` : "")
       + `<div class="row" style="border-top:1px solid rgba(255,255,255,.25);margin-top:4px;padding-top:4px"><span>Total corpus</span><span>${money(best.r.total)}</span></div>`;
     tip.classList.add("on");
     const left = best.x / 900 * box.width;
@@ -929,10 +1028,48 @@ function run(){
     $("#verdictNote").textContent += ` Bad start is on: ${s.stress.eq}% equity and ${s.stress.debt}% debt`
       + ` for year${s.stress.years > 1 ? "s 1\u2013" + s.stress.years : " 1"}, then the rates in the matrix resume.`;
   }
+  if (s.flows){
+    const ins = s.flows.rows.filter(f => f.amt > 0).length, outs = s.flows.rows.length - ins;
+    $("#verdictNote").textContent += ` Cash flows are on: `
+      + [ins ? `${ins} inflow${ins>1?"s":""}` : "", outs ? `${outs} outflow${outs>1?"s":""}` : ""].filter(Boolean).join(" and ")
+      + ` applied on top of the monthly spend.`;
+  }
   renderChart(res, s, view);
   renderCascade(res, view);
   renderTable(res, s, view);
 }
+
+const FLOW_MAX = 10;
+function addFlowRow(){
+  const tb = $("#flowRows");
+  if (tb.rows.length >= FLOW_MAX) return;
+  const tr = document.createElement("tr");
+  tr.innerHTML =
+    `<td><input class="narrow" data-f="year" type="number" min="1" max="90" step="1" aria-label="Year"></td>`
+  + `<td><input class="narrow" data-f="amt" type="number" step="100000" aria-label="Amount"></td>`
+  + `<td><input data-f="rep" type="checkbox" aria-label="Repeats every year after"></td>`;
+  tb.appendChild(tr);
+  syncFlows();
+}
+function resetFlowRows(){
+  $("#flowRows").innerHTML = "";
+  for (let i = 0; i < DEFAULTS.flowRows; i++) addFlowRow();
+}
+function syncFlows(){
+  const on = $("#flowsOn").checked;
+  $$("#flowRows input").forEach(el => el.disabled = !on);
+  $("#flowsReal").disabled = !on;
+  $("#flowAdd").disabled = !on || $("#flowRows").rows.length >= FLOW_MAX;
+  $("#flowBox").classList.toggle("off", !on);
+  if (!on){ $("#flowEcho").textContent = ""; return; }
+  const s = readState();
+  if (!s.flows){ $("#flowEcho").textContent = "No rows filled in yet, so nothing is being applied."; return; }
+  $("#flowEcho").textContent = s.flows.rows.map(f =>
+    (f.rep ? `year ${f.year} onward ` : `year ${f.year} `)
+    + (f.amt > 0 ? "+" : "\u2212") + money(Math.abs(f.amt)) + (f.rep ? " a year" : "")
+  ).join("; ") + (s.flows.real ? " \u2014 in today's rupees." : " \u2014 as actual rupees of that year.");
+}
+$("#flowAdd").addEventListener("click", addFlowRow);
 
 function syncStress(){
   const on = $("#stressOn").checked;
@@ -944,7 +1081,7 @@ function syncStress(){
     `Years 1\u2013${s.stress.years} run at ${s.stress.eq}% equity and ${s.stress.debt}% debt, then the rates above resume.`;
 }
 
-document.addEventListener("input", e => { if (e.target.matches("input")){ clearSolve(); syncStress(); run(); } });
+document.addEventListener("input", e => { if (e.target.matches("input")){ clearSolve(); syncStress(); syncFlows(); run(); } });
 window.addEventListener("resize", () => { if (lastRun) renderChart(lastRun.res, lastRun.s, lastRun.view); });
 
 $("#reset").addEventListener("click", ()=>{
@@ -954,19 +1091,26 @@ $("#reset").addEventListener("click", ()=>{
   $$('input[data-k="ret"]').forEach(el => el.value = DEFAULTS.ret[+el.dataset.i]);
   $$('input[data-k="tax"]').forEach(el => el.value = DEFAULTS.tax[+el.dataset.i]);
   $$('input[data-k="w"]').forEach(el => el.value = DEFAULTS.w[+el.dataset.b][+el.dataset.i]);
+  $("#flowsOn").checked = false;
+  $("#flowsReal").checked = true;
+  resetFlowRows();
   $("#stressOn").checked = false;
   $("#stressYears").value = DEFAULTS.stressYears;
   $("#stressEq").value    = DEFAULTS.stressEq;
   $("#stressDebt").value  = DEFAULTS.stressDebt;
   syncStress();
+  syncFlows();
   run();
 });
 
 $("#csv").addEventListener("click", ()=>{
-  const head = "Year,Monthly expense,Emergency fund (sealed),Bucket 1,Bucket 2,Bucket 3,Spendable (B1+B2+B3),Total Corpus incl. emergency fund,Tax paid\n";
+  const s = readState();
+  const head = "Year,Monthly expense," + (s.flows ? "Cash flow," : "")
+    + "Emergency fund (sealed),Bucket 1,Bucket 2,Bucket 3,Spendable (B1+B2+B3),Total Corpus incl. emergency fund,Tax paid\n";
   const body = lastRun.view.map(r => {
     const c = r.bal.map(Math.round), spendable = c[1] + c[2] + c[3];
-    return [r.year, Math.round(r.monthly), ...c, spendable, c[0] + spendable, Math.round(r.tax)].join(",");
+    const flow = s.flows ? [Math.round(r.flow)] : [];
+    return [r.year, Math.round(r.monthly), ...flow, ...c, spendable, c[0] + spendable, Math.round(r.tax)].join(",");
   }).join("\n");
   const url = URL.createObjectURL(new Blob([head+body], {type:"text/csv"}));
   const a = document.createElement("a");
@@ -975,7 +1119,9 @@ $("#csv").addEventListener("click", ()=>{
   setTimeout(()=>URL.revokeObjectURL(url), 1000);
 });
 
+resetFlowRows();
 syncStress();
+syncFlows();
 run();
 </script>
 </body>
