@@ -325,7 +325,7 @@ table.flows tbody tr:last-child td{padding-bottom:2px}
 
         <fieldset id="stressBox" class="off">
           <legend>Slump Start (Optional)</legend>
-          <p class="hint">Select this if your current market returns are lower(or heigher) than expected long term projected market returns.</p>
+          <p class="hint">Select this if your current market returns are lower(or higher) than expected long term projected market returns.</p>
           <label class="stress-toggle">
             <input type="checkbox" id="stressOn">
             <span>Open with a slump<span class="sub">Overrides the returns above for the first few years only, then resets them back to the projected values. OFF by default.</span></span>
@@ -365,7 +365,7 @@ table.flows tbody tr:last-child td{padding-bottom:2px}
           </div>
           <label class="checkrow">
             <input type="checkbox" id="flowsReal" checked disabled>
-            <span><b style="color:var(--ink)">Amounts are in today's rupees</b><br>Each amount is grows by the inflation rate before it is applied, similar to how monthly spend inflates. Uncheck to enter the actual rupee figure for that year.</span>
+            <span><b style="color:var(--ink)">Amounts are in today's rupees</b><br>Each amount grows by the inflation rate before it is applied, similar to how monthly spend inflates. Uncheck to enter the actual rupee figure for that year.</span>
           </label>
           <p class="stress-echo" id="flowEcho"></p>
         </fieldset>
@@ -420,33 +420,34 @@ table.flows tbody tr:last-child td{padding-bottom:2px}
       <footer>
         <h3>Important Notes</h3>
         
-		<h4>What happens each year</h4>
+    <h4>What happens each year</h4>
         <p>Monthly expenses are funded by redemptions from Bucket&nbsp;1. All four buckets then compound monthly at their respective weighted gross return. At the year end Bucket&nbsp;2 refills Bucket&nbsp;1 back to its target by redemptions of it's own holdings. Bucket&nbsp;3 then refills Bucket&nbsp;2 back up to its own target.</p>
         <p>So each year opens fully funded for the year ahead. If Bucket&nbsp;2 cannot cover the Bucket&nbsp;1 refill on its own, Bucket&nbsp;3 backstops it. Nothing refills Bucket&nbsp;3. A corpus that cannot cover every opening bucket size would leave the later buckets short.</p>
         <p>The emergency fund is funded once at the start(even <i>before</i> Buckets&nbsp;1 and&nbsp;2 are filled) and is never redeemed. It compounds at its own weighted return. And because it is sealed, a bigger emergency fund shortens how long total spendable amount lasts. E.g: on the default plan, going from no fund to 24 months of one costs about two years of runway. "Total Corpus" figure includes Emergency fund.</p>
         <p>In case, if Bucket&nbsp;1 empties mid-year, the shortfall is pulled early from Bucket&nbsp;2 and then Bucket&nbsp;3; never from the emergency fund.</p>
-        <p><b>Assumption:</b> Returns are assumed to be steady every year; real markets do not provide steady returns. See <i>Slump Start</i>below.</p>
+        <p><b>Assumption:</b> Returns are assumed to be steady every year; real markets do not provide steady returns. See <i>Slump Start</i> below.</p>
 		
     <h4>Funding tax payments</h4>
-        <p>Taxs are paid for redemptions only. Each bucket carries a cost basis, and when it redeems, only the gain portion of that redemption is taxed at the bucket's weighted rate. Delivering a given amount of spendable cash therefore means redeeming slightly more than that amount - tax-bite. Early years, the gain portion is small and the effective tax-bite is minimal. But, over time, as unrealised gains build up, the tax-bite for that bucket increases. This is not a tax optimixation strategy.</p>
-        <p>Every balance on this page — chart, table and CSV — is pre-tax. Unrealised gains inside a bucket are not net of tases. So the corpus at the end of the projection would be much less at redemption.</p>
-        <p>Gains are tracked per bucket on an average-cost basis rather than per holding. Thsi makes Switching between asset classes inside a single bucket free of taxes. Only real rebalancing inside a bucket would be taxed. Losses are not carried forward or set off.</p>
+        <p>Taxes are paid for redemptions only. Each bucket carries a cost basis, and when it redeems, only the gain portion of that redemption is taxed at the bucket's weighted rate. Delivering a given amount of spendable cash therefore means redeeming slightly more than that amount - tax-bite. Early years, the gain portion is small and the effective tax-bite is minimal. But, over time, as unrealised gains build up, the tax-bite for that bucket increases. This is not a tax optimixation strategy.</p>
+        <p>Every balance on this page — chart, table and CSV — is pre-tax. Unrealised gains inside a bucket are not net of taxes. So the corpus at the end of the projection would be much less at redemption.</p>
+        <p>Gains are tracked per bucket on an average-cost basis rather than per holding. This makes Switching between asset classes inside a single bucket free of taxes. Only real rebalancing inside a bucket would be taxed. Losses are not carried forward or set off.</p>
         <p>The ₹1.25 lakh a year equity exemption is not modelled — too small to make any material change over long term (₹15,600 a year)</p>
         <p>If you are re-structuring your existing portfolio to follow this bucket strategy, consider post-tax final amount as the opening corpus for this calculation.</p>
         <p><b>Assumption:</b> The opening corpus is assumed to be freshly invested, so it starts with no embedded gains. And hence no taxes as well. If your actual holdings already carry large unrealised gains, real tax in the early years will be higher than shown. </p>
         
     
     <h4>Inflation</h4>
-        <p>Inflation applies to (1)the monthly spends (so it increases every year) and (2)the money outflows if <i>>amounts are in today's rupees</i> is unticked . Because Buckets&nbsp;1 and&nbsp;2 are defined in months of spending, their refill targets follow it up. Balances by-themselves are never inflation-adjusted.</p>
+        <p>Inflation applies to (1)the monthly spends (so it increases every year) and (2)the money outflows if <i>amounts are in today's rupees</i> is unticked . Because Buckets&nbsp;1 and&nbsp;2 are defined in months of spending, their refill targets follow it up. Balances by-themselves are never inflation-adjusted.</p>
 
-		<h4>Solving backwards (Additional Solver - Optional)</h4>
+    <h4>Solving backwards (Additional Solver - Optional)</h4>
         <p>OFF by default; the two solve buttons search for the number that can just barely satisfy the tenure horizon, keeping every other input you specified as frozen. They run the same model the rest of the page runs, so the answers already account for tax on each refill, for the emergency fund being filled first, and for the Bucket&nbsp;1 and&nbsp;2 targets rising with inflation.</p>
-		    <p><b>Highest monthly spend:</b> largest amount available for spending with given corpus and tenure.<br><b>Smallest corpus:</b> Lowest corpus needed to fund the given monthly expense and tenure.</p>
-		    <p>Note: Both answers are rounded the safe way — the spend down to the nearest ₹500, the corpus up to the nearest ₹50,000 — and then re-checked against the model, so the figure shown always clears rather than sitting a rupee on the wrong side of the line. Changing any input clears the answer, because a solved number stops being true the moment the inputs behind it move.</p>
+		<p><b>Highest monthly spend:</b> largest amount available for spending with given corpus and tenure.<br><b>Smallest corpus:</b> Lowest corpus needed to fund the given monthly expense and tenure.</p>
+		<p>Note: Both answers are rounded the safe way — the spend down to the nearest ₹500, the corpus up to the nearest ₹50,000 — and then re-checked against the model, so the figure shown always clears rather than sitting a rupee on the wrong side of the line. Changing any input clears the answer, because a solved number stops being true the moment the inputs behind it move.</p>
         <p>Read them as the edge of the cliff, not as a target. A corpus that <i>just</i> funds the tenure has no margin for a bad first decade, for a year of spending you did not plan, or for living longer than the tenure you input. The steady-return assumption below makes that edge look far firmer than it is.</p>
 
     <h4>Slump Start (Optional)</h4>
         <p>OFF by default: Enabling this forces the first few years returns to what you set here, after which the matrix rates resume for the rest of the projection. Both equity columns take the equity figure and all three debt columns take the debt figure.</p>
+		<p>With default steady returns, the model rewards shrinking buckets to zero. Severe slumps make the structure more realistic</p> 
         <p>Inflation is unchanged during the slump. Note that this is being generous — prices will still keep rising while markets fall.</p>
         <p>The two solve buttons respect this setting. With the box ticked, "smallest corpus" will answer a more useful question: <i>What is the least amount I need to survive a bad opening v/s an average one.</i></p>
 
@@ -455,7 +456,7 @@ table.flows tbody tr:last-child td{padding-bottom:2px}
         <p><b>Money inflow</b> lands in Bucket&nbsp;3 with a fresh cost basis, because it is not needed this month and Bucket&nbsp;3 is where unallocated corpus already sits. <b>Money outflow</b> is redeemed in the same order as spending; Bucket&nbsp;1 first, then&nbsp;2, then&nbsp;3. Pays capital gains tax like any other redemption. A ten lakh outflow therefore costs more than ten lakhs, and the gap widens as unrealised gains build up. </p>
         <p>With <i>amounts are in today's rupees</i> ticked, each figure grows as per inflation rate before being applied, similar to monthly spend. E.g. a car entered as Rs. 15,00,000 in year&nbsp;10 is the cost of that car in today, Rather than the rupee figure you would actually spent in future. Untick it to enter the literal amount for that year. This would be the right setting for a fixed inflow like pension which does not increase with inflation.</p>
         <p>In case an outflow cannot be funded, it counts against the year exactly as unfunded spending does and the projection stops there.</p>
-        <p>Also, both the solve buttons take the flows into account. In this case, "smallest corpus" answers a sharper question: <i>What is the least amount I need, given the property sale I am expecting in 'x' years, OR the wedding you I need to pay for?</i>.</p>
+        <p>Also, both the solve buttons take the flows into account. In this case, "smallest corpus" answers a sharper question: <i>What is the least amount I need, given the property sale I am expecting in 'x' years, OR the wedding I need to pay for?</i>.</p>
 
         <p style="margin-top:14px"><b>It's merely a planning template, no advice provided.</b><br></p>
 		<p style="margin-top:14px">Send feedback and comments to <a href="mailto:puneetg123@yahoo.com">puneetg123@yahoo.com</a></p>
@@ -1025,7 +1026,7 @@ function run(){
   lastRun = { s, res, view };
   renderVerdict(res, s, view);
   if (s.stress){
-    $("#verdictNote").textContent += ` Bad start is on: ${s.stress.eq}% equity and ${s.stress.debt}% debt`
+    $("#verdictNote").textContent += ` slump start is on: ${s.stress.eq}% equity and ${s.stress.debt}% debt`
       + ` for year${s.stress.years > 1 ? "s 1\u2013" + s.stress.years : " 1"}, then the rates in the matrix resume.`;
   }
   if (s.flows){
