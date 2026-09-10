@@ -34,11 +34,14 @@ const YEAR_IN_TEXT = /year (\d+)/;
 
 /* ------------------------------------------------------------------ harness */
 
-function boot(hash) {
+function boot(hash, chartPx) {
   const url = 'https://example.test/index.html' + (hash ? '#' + hash : '');
   const dom = new JSDOM(fs.readFileSync(FILE, 'utf8'), { runScripts: 'dangerously', url });
   const w = dom.window;
-  w.SVGElement.prototype.getBoundingClientRect = () => ({ left: 0, width: 900, top: 0, height: 380 });
+  // The chart sizes its viewBox to however wide it has actually been laid out, so tests that
+  // care about small screens pass a width here. Everything else keeps the desktop default.
+  const px = chartPx || 900;
+  w.SVGElement.prototype.getBoundingClientRect = () => ({ left: 0, width: px, top: 0, height: 380 });
   w.URL.createObjectURL = () => 'blob:test';
   const d = w.document;
   const fire = el => el.dispatchEvent(new w.Event('input', { bubbles: true }));
@@ -780,6 +783,99 @@ function suiteRupeeEntry() {
     '-> ' + p.el('#corpus').value);
 }
 
+/* ----------------------------------------------------------- 9. small screens */
+
+function suiteSmallScreens() {
+  group('Small screens');
+
+  /* A viewBox stretched to a narrow column scales its text down with it. Drawing the box at
+     the width it actually has keeps labels at the size they claim to be. */
+  const measure = px => {
+    const p = boot(null, px);
+    p.w.dispatchEvent(new p.w.Event('resize'));
+    const svg = p.el('#chart');
+    const W = +svg.getAttribute('viewBox').split(' ')[2];
+    const fonts = [...new Set([...svg.innerHTML.matchAll(/font-size="([\d.]+)"/g)].map(m => +m[1]))];
+    return { p, W, smallest: Math.min(...fonts) * px / W };
+  };
+
+  let legible = true; const sizes = [];
+  for (const px of [320, 360, 390, 414, 513, 616, 744, 832, 900]) {
+    const m = measure(px);
+    sizes.push(px + ':' + m.smallest.toFixed(1));
+    if (m.smallest < 9) legible = false;
+  }
+  ok('chart labels stay legible at every width', legible, sizes.join('  '));
+  ok('the viewBox tracks the measured width', measure(390).W === 390 && measure(744).W === 744);
+  ok('a very narrow column is clamped to a floor', measure(320).W === 360);
+  ok('the desktop default is unchanged', measure(900).W === 900);
+
+  const xLabels = px => (measure(px).p.el('#chart').innerHTML.match(/text-anchor="middle"/g) || []).length;
+  ok('a narrow chart thins out its year labels', xLabels(390) < xLabels(900),
+    `${xLabels(390)} vs ${xLabels(900)}`);
+
+  const axisOf = px => {
+    const html = measure(px).p.el('#chart').innerHTML;
+    const m = [...html.matchAll(/text-anchor="end" font-size="[\d.]+" fill="#5f726f">([^<]+)</g)]
+      .map(x => x[1]);
+    return m[m.length - 1] || '';
+  };
+  ok('narrow axis labels drop a decimal place so they still fit',
+    axisOf(390).length < axisOf(900).length, `${axisOf(390)} vs ${axisOf(900)}`);
+
+  /* The tooltip converts screen pixels through the viewBox, so it has to use the current
+     width rather than a fixed one, or every touch lands on the wrong year. */
+  function yearAt(px, fraction) {
+    const p = boot(null, px);
+    p.set('#corpus', '20cr');           // a plan that runs the full 40 years
+    p.w.dispatchEvent(new p.w.Event('resize'));
+    p.el('#chart').dispatchEvent(new p.w.MouseEvent('mousemove',
+      { clientX: px * fraction, bubbles: true }));
+    const t = p.el('#tip').textContent;
+    if (/Opening split/.test(t)) return 0;
+    const m = t.match(/Year (\d+)/);
+    return m ? +m[1] : null;
+  }
+  /* The two charts have different margins, so the same screen fraction is not the same year
+     on both. What must hold is that each chart reads its own geometry correctly: the far
+     left is the start, the far right is the last year, and the middle is somewhere in the
+     middle. A tooltip still dividing by a fixed 900 would peg a phone touch to the far end. */
+  for (const px of [390, 900]) {
+    const lo = yearAt(px, 0.01), mid = yearAt(px, 0.5), hi = yearAt(px, 0.99);
+    ok(`tooltip reads its own geometry at ${px}px`,
+      lo === 0 && hi === 40 && mid > 13 && mid < 27, `left ${lo}, middle ${mid}, right ${hi}`);
+  }
+
+  /* The tooltip box is positioned in screen pixels from the same viewBox coordinate, so it
+     has to convert through the current width too, or it drifts away from the guide line it
+     is meant to be annotating. */
+  function tipLeftAt(px, fraction) {
+    const p = boot(null, px);
+    p.set('#corpus', '20cr');
+    p.w.dispatchEvent(new p.w.Event('resize'));
+    p.el('#chart').dispatchEvent(new p.w.MouseEvent('mousemove',
+      { clientX: px * fraction, bubbles: true }));
+    return parseFloat(p.el('#tip').style.left) || 0;
+  }
+  const nearLeft = tipLeftAt(390, 0.02), nearRight = tipLeftAt(390, 0.98);
+  ok('the tooltip follows the point it is annotating',
+    nearRight > nearLeft && nearRight > 390 * 0.6,
+    `left ${nearLeft.toFixed(0)}px, right ${nearRight.toFixed(0)}px of 390`);
+
+  /* Rules that make the page usable with a thumb. Asserted against the stylesheet text
+     because jsdom does no layout — these document intent and catch accidental deletion. */
+  const css = fs.readFileSync(FILE, 'utf8');
+  const narrow = css.slice(css.indexOf('@media (max-width:640px)'),
+                           css.indexOf('@media (prefers-reduced-motion'));
+  ok('there is a narrow-screen stylesheet', narrow.length > 200);
+  ok('inputs reach 16px so iOS does not zoom on focus', /textarea\{font-size:16px\}/.test(narrow));
+  ok('fields stack instead of squeezing side by side', /\.field\{grid-template-columns:1fr/.test(narrow));
+  ok('the year column stays put while the table scrolls',
+    /table\.years tbody th\{position:sticky;left:0/.test(narrow));
+  ok('buttons grow to a thumb-sized target', /\.btn\{font-size:14px;padding:11px 14px\}/.test(narrow));
+  ok('the page no longer claims to be laptop-only', !/not mobile friendly/i.test(css));
+}
+
 /* -------------------------------------------------------------- 9. edges */
 
 function suiteEdges() {
@@ -857,6 +953,7 @@ suiteSlump();
 suiteFlows();
 suiteShare();
 suiteRupeeEntry();
+suiteSmallScreens();
 suiteEdges();
 
 const secs = ((Date.now() - started) / 1000).toFixed(1);

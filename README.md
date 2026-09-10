@@ -43,6 +43,10 @@ What the suite pins down:
 - **Slump placement.** The same slump moved later is never worse, the marked rows track the
   window at both edges, and share links written before the start year existed still load and
   still mean what they meant.
+- **The chart stays legible on a phone.** Its viewBox is drawn at the width it was actually
+  laid out at, so labels are not scaled down with it; the suite checks the smallest label
+  across widths from 320px to 900px, and that the tooltip reads its own geometry rather than
+  a fixed one.
 - Plus cash-flow timing and recurrence, the today's-rupees toggle, CSV export with and
   without the optional columns, and a spread of edge cases.
 
