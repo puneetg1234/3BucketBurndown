@@ -1,0 +1,13 @@
+{
+  "name": "3bucketburndown",
+  "version": "1.0.0",
+  "description": "Tests for the three-bucket retirement burndown calculator",
+  "private": true,
+  "scripts": {
+    "test": "node test.js"
+  },
+  "devDependencies": {
+    "jsdom": "^24.0.0"
+  },
+  "license": "MIT"
+}
