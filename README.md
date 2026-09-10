@@ -40,6 +40,9 @@ What the suite pins down:
 - **Rupee shorthand parses one way.** Eleven spellings of the same amount (`42000000`,
   `4,20,00,000`, `4.2cr`, `50lac`, `750k` and so on) must all reach the same number, and two
   different spellings of one plan must give identical projections.
+- **Slump placement.** The same slump moved later is never worse, the marked rows track the
+  window at both edges, and share links written before the start year existed still load and
+  still mean what they meant.
 - Plus cash-flow timing and recurrence, the today's-rupees toggle, CSV export with and
   without the optional columns, and a spread of edge cases.
 

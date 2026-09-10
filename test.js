@@ -390,7 +390,8 @@ function suiteSlump() {
   p.set('#corpus', 60000000).check('#stressOn', true);
 
   ok('inputs become editable',
-    ['#stressYears', '#stressEq', '#stressDebt'].every(s => !p.el(s).disabled));
+    ['#stressYears', '#stressStart', '#stressEq', '#stressDebt'].every(s => !p.el(s).disabled));
+  ok('the slump starts in year 1 by default', p.el('#stressStart').value === '1');
   ok('the echo line explains the setting', p.el('#stressEcho').textContent.length > 10,
     '-> ' + p.el('#stressEcho').textContent);
 
@@ -423,6 +424,79 @@ function suiteSlump() {
     prev = f;
   }
   ok('a longer slump is never better', longer);
+
+  /* Placing the slump later is the whole point of the start year. */
+  p.reset();
+  p.set('#corpus', '8cr').check('#stressOn', true).set('#stressEq', -30).set('#stressYears', 3);
+  const stressedYears = () => p.rows().filter(r => r.classList.contains('stressed'))
+    .map(r => +r.querySelector('th').textContent.trim());
+
+  p.set('#stressStart', 1);
+  const atStart = p.failYear();
+  ok('a slump in year 1 marks years 1 to 3',
+    JSON.stringify(stressedYears()) === JSON.stringify([1, 2, 3]), stressedYears().join(','));
+
+  p.set('#stressStart', 20);
+  const atTwenty = p.failYear();
+  ok('a slump in year 20 marks years 20 to 22',
+    JSON.stringify(stressedYears()) === JSON.stringify([20, 21, 22]), stressedYears().join(','));
+  ok('timing changes the outcome', atStart !== atTwenty,
+    `year 1 -> ${atStart === Infinity ? 'clears' : 'yr ' + atStart}, year 20 -> ${atTwenty === Infinity ? 'clears' : 'yr ' + atTwenty}`);
+  ok('and the same slump later is never worse', atTwenty >= atStart);
+
+  /* Monotonic in timing: the corpus has more time to compound and fewer years left to fund. */
+  let prevF = null, laterOk = true, seq = [];
+  for (const st of [1, 3, 5, 8, 12, 16, 20, 25, 30]) {
+    p.set('#stressStart', st);
+    const f = p.failYear();
+    seq.push(st + ':' + (f === Infinity ? 'clears' : f));
+    if (prevF !== null && f < prevF) laterOk = false;
+    prevF = f;
+  }
+  ok('pushing the slump later is never worse', laterOk, seq.join('  '));
+
+  /* The echo and the note both have to name the actual window. */
+  p.set('#stressStart', 20);
+  ok('the echo names the window', /20.*22/.test(p.el('#stressEcho').textContent),
+    p.el('#stressEcho').textContent);
+  ok('the note names the window', /20.*22/.test(p.text('#verdictNote')));
+  p.set('#stressYears', 1);
+  ok('a one-year slump reads as a single year',
+    /year 20/i.test(p.el('#stressEcho').textContent) && !/20.*21/.test(p.el('#stressEcho').textContent),
+    p.el('#stressEcho').textContent);
+  p.set('#stressYears', 3);
+
+  /* Both edges are marked once the slump is not at the very beginning. */
+  ok('a later slump marks both edges on the chart',
+    /slump starts/.test(p.el('#chart').innerHTML) && /slump ends/.test(p.el('#chart').innerHTML));
+  p.set('#stressStart', 1);
+  ok('a slump at year 1 marks only its end', !/slump starts/.test(p.el('#chart').innerHTML));
+
+  /* A slump scheduled past the horizon simply never shows up. */
+  p.set('#stressStart', 80).set('#horizon', 40);
+  ok('a slump beyond the horizon marks nothing', stressedYears().length === 0);
+  p.reset();
+
+  /* Share links carry the start, and links written before it existed still work. */
+  const a2 = boot();
+  a2.set('#corpus', '8cr').check('#stressOn', true).set('#stressEq', -25)
+    .set('#stressYears', 4).set('#stressStart', 15);
+  a2.click('#share');
+  const f2 = a2.fragment();
+  ok('the link carries the start year', /s=4,-25,[\d.]+,15/.test(f2), f2);
+  ok('round trip: a slump placed later', a2.snapshot() === boot(f2).snapshot());
+
+  const legacy = boot('c=80000000&s=3,-30,6');
+  ok('a link written before the start year existed still loads',
+    legacy.el('#stressStart').value === '1' && legacy.el('#stressOn').checked === true,
+    'start=' + legacy.el('#stressStart').value);
+  const fresh = boot();
+  fresh.set('#corpus', 80000000).check('#stressOn', true).set('#stressEq', -30)
+       .set('#stressYears', 3).set('#stressDebt', 6);
+  ok('and it means what it always meant', legacy.snapshot() === fresh.snapshot());
+
+  p.reset();
+  ok('reset restores the start year to 1', p.el('#stressStart').value === '1');
 
   /* The solver has to see the slump, or its answer is for a different plan. */
   p.reset();
