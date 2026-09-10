@@ -353,8 +353,12 @@ table.flows tbody tr:last-child td{padding-bottom:2px}
             <span>Open with a slump<span class="sub">Overrides the returns above for the first few years only, then resets them back to the projected values. OFF by default.</span></span>
           </label>
           <div class="field">
-            <label for="stressYears">How long<span class="sub">years from the start</span></label>
+            <label for="stressYears">How long<span class="sub">how many years it lasts</span></label>
             <input id="stressYears" type="number" min="1" max="20" step="1" value="3" disabled>
+          </div>
+          <div class="field">
+            <label for="stressStart">Starting in year<span class="sub">1 hits immediately, at the worst possible moment</span></label>
+            <input id="stressStart" type="number" min="1" max="90" step="1" value="1" disabled>
           </div>
           <div class="field">
             <label for="stressEq">Equity return<span class="sub">% a year, both equity columns</span></label>
@@ -470,7 +474,8 @@ table.flows tbody tr:last-child td{padding-bottom:2px}
         <p>Read them as the edge of the cliff, not as a target. A corpus that <i>just</i> funds the tenure has no margin for a bad first decade, for a year of spending you did not plan, or for living longer than the tenure you input. The steady-return assumption below makes that edge look far firmer than it is.</p>
 
     <h4>Slump Start (Optional)</h4>
-        <p>OFF by default: Enabling this forces the first few years returns to what you set here, after which the matrix rates resume for the rest of the projection. Both equity columns take the equity figure and all three debt columns take the debt figure.</p>
+        <p>OFF by default: Enabling this forces a window of years — as many as you set, beginning in the year you name — to the returns given here, after which the matrix rates resume for the rest of the projection. Both equity columns take the equity figure and all three debt columns take the debt figure.</p>
+        <p>Starting in year&nbsp;1 puts the slump at the worst possible moment, right as withdrawals begin. Moving it later separates timing from depth: the same fall costs far less once the corpus has had years to compound and has fewer years left to fund.</p>
 		<p>With default steady returns, the model rewards shrinking buckets to zero. Severe slumps make the structure more realistic</p> 
         <p>Inflation is unchanged during the slump. Note that this is being generous — prices will still keep rising while markets fall.</p>
         <p>The two solve buttons respect this setting. With the box ticked, "smallest corpus" will answer a more useful question: <i>What is the least amount I need to survive a bad opening v/s an average one.</i></p>
@@ -505,7 +510,7 @@ const DEFAULTS = {
   corpus:10000000, expense:100000, inflation:7, horizon:40,
   mEF:12, mB1:18, mB2:48,
   ret:[9,10,6,5.5,5], tax:[12.5,12.5,20,30,30],
-  stressYears:3, stressEq:-10, stressDebt:6,
+  stressYears:3, stressStart:1, stressEq:-10, stressDebt:6,
   flowRows:3,
   w:[[0,0,0,0,100],[0,0,0,100,0],[20,0,80,0,0],[0,80,20,0,0]]
 };
@@ -617,6 +622,7 @@ function readState(){
 
   s.stress = $("#stressOn").checked ? {
     years: Math.max(1, Math.min(20, Math.round(num($("#stressYears")) || 1))),
+    start: Math.max(1, Math.min(90, Math.round(num($("#stressStart")) || 1))),
     eq:    Math.max(-99, Math.min(100, num($("#stressEq")))),
     debt:  Math.max(-99, Math.min(100, num($("#stressDebt"))))
   } : null;
@@ -641,6 +647,11 @@ function weightedGross(row, rets){
 }
 // columns 0 and 1 are the equity ones; 2, 3 and 4 are all debt
 const stressRates = st => [st.eq, st.eq, st.debt, st.debt, st.debt];
+const slumpFirst = s => s.stress.start;
+const slumpLast  = s => s.stress.start + s.stress.years - 1;
+function inSlumpYear(s, y){
+  return !!s.stress && y >= slumpFirst(s) && y <= slumpLast(s);
+}
 
 /* ---------- a bucket: value, cost basis, gross return, tax rate ---------- */
 function makeBucket(value, gross, taxRate){
@@ -700,7 +711,7 @@ function simulate(s){
     // Buckets otherwise keep the fixed gross set at construction. Only a live stress window
     // rewrites it, and only for the years inside that window.
     if (s.stress){
-      const rr = y <= s.stress.years ? stressRates(s.stress) : s.ret;
+      const rr = inSlumpYear(s, y) ? stressRates(s.stress) : s.ret;
       bk.forEach((b,i)=> b.g = weightedGross(s.w[i], rr));
     }
 
@@ -930,7 +941,7 @@ function renderTable(res, s, view){
     const spendable = c[1] + c[2] + c[3];
     return `
     <tr class="${[res.failYear === r.year ? "dry":"",
-                  s.stress && r.year >= 1 && r.year <= s.stress.years ? "stressed":""].filter(Boolean).join(" ")}">
+                  inSlumpYear(s, r.year) ? "stressed":""].filter(Boolean).join(" ")}">
       <th scope="row">${r.year === 0 ? "Start" : r.year}</th>
       <td>${full(r.monthly)}</td>${s.flows ? `<td>${r.flow ? full(r.flow) : "—"}</td>` : ""}
       ${c.map(v=>`<td>${full(v)}</td>`).join("")}
@@ -998,11 +1009,19 @@ function renderChart(res, s, view){
     }
   }
   if (s.stress){
-    const i = view.findIndex(r => r.year === s.stress.years);
+    const i = view.findIndex(r => r.year === slumpLast(s));
     if (i > 0){
       const x = X(i);
       out += `<line x1="${x.toFixed(1)}" y1="${PAD.t}" x2="${x.toFixed(1)}" y2="${PAD.t+ih}" stroke="#c2833a" stroke-width="1.5" stroke-dasharray="3 3"/>`;
       out += `<text x="${(x+6).toFixed(1)}" y="${H-38}" font-size="11.5" font-weight="600" fill="#c2833a">slump ends</text>`;
+    }
+    if (slumpFirst(s) > 1){
+      const j = view.findIndex(r => r.year === slumpFirst(s));
+      if (j > 0){
+        const xs = X(j);
+        out += `<line x1="${xs.toFixed(1)}" y1="${PAD.t}" x2="${xs.toFixed(1)}" y2="${PAD.t+ih}" stroke="#c2833a" stroke-width="1.5" stroke-dasharray="3 3"/>`;
+        out += `<text x="${(xs-6).toFixed(1)}" y="${H-38}" text-anchor="end" font-size="11.5" font-weight="600" fill="#c2833a">slump starts</text>`;
+      }
     }
   }
   out += `<line x1="${PAD.l}" y1="${PAD.t+ih}" x2="${W-PAD.r}" y2="${PAD.t+ih}" stroke="#16262c" stroke-width="1"/>`;
@@ -1107,7 +1126,9 @@ function run(){
   renderVerdict(res, s, view);
   if (s.stress){
     $("#verdictNote").textContent += ` slump start is on: ${s.stress.eq}% equity and ${s.stress.debt}% debt`
-      + ` for year${s.stress.years > 1 ? "s 1\u2013" + s.stress.years : " 1"}, then the rates in the matrix resume.`;
+      + ` for year${s.stress.years > 1
+            ? "s " + slumpFirst(s) + "\u2013" + slumpLast(s)
+            : " " + slumpFirst(s)}, then the rates in the matrix resume.`;
   }
   if (s.flows){
     const ins = s.flows.rows.filter(f => f.amt > 0).length, outs = s.flows.rows.length - ins;
@@ -1184,8 +1205,11 @@ function shareURL(){
   if (tax.join(",") !== DEFAULTS.tax.join(",")) q.push("t=" + tax.join(","));
   const w = readWeights().map(r => r.join(",")).join(",");
   if (w !== DEFAULTS.w.map(r => r.join(",")).join(",")) q.push("w=" + w);
-  if ($("#stressOn").checked)
-    q.push("s=" + [$("#stressYears").value, $("#stressEq").value, $("#stressDebt").value].join(","));
+  if ($("#stressOn").checked){
+    const st = [$("#stressYears").value, $("#stressEq").value, $("#stressDebt").value];
+    if (parseFloat($("#stressStart").value) !== 1) st.push($("#stressStart").value);
+    q.push("s=" + st.join(","));
+  }
   if ($("#flowsOn").checked){
     const rows = [];
     $$("#flowRows tr").forEach(tr => {
@@ -1239,6 +1263,7 @@ function applyShareURL(){
     const a = p.get("s").split(",");
     $("#stressOn").checked = true;
     if (a[0]) $("#stressYears").value = a[0];
+    $("#stressStart").value = a[3] || 1;
     if (a[1]) $("#stressEq").value    = a[1];
     if (a[2]) $("#stressDebt").value  = a[2];
     any = true;
@@ -1296,12 +1321,15 @@ $("#share").addEventListener("click", ()=>{
 
 function syncStress(){
   const on = $("#stressOn").checked;
-  ["#stressYears","#stressEq","#stressDebt"].forEach(id => $(id).disabled = !on);
+  ["#stressYears","#stressStart","#stressEq","#stressDebt"].forEach(id => $(id).disabled = !on);
   $("#stressBox").classList.toggle("off", !on);
   if (!on){ $("#stressEcho").textContent = ""; return; }
   const s = readState();
   $("#stressEcho").textContent =
-    `Years 1\u2013${s.stress.years} run at ${s.stress.eq}% equity and ${s.stress.debt}% debt, then the rates above resume.`;
+    (s.stress.years > 1
+      ? `Years ${slumpFirst(s)}\u2013${slumpLast(s)} run`
+      : `Year ${slumpFirst(s)} runs`)
+    + ` at ${s.stress.eq}% equity and ${s.stress.debt}% debt, then the rates above resume.`;
 }
 
 document.addEventListener("input", e => { if (e.target.matches("input")){ clearSolve(); clearShare(); updateAmountEchoes(); syncStress(); syncFlows(); run(); } });
@@ -1322,6 +1350,7 @@ $("#reset").addEventListener("click", ()=>{
   resetFlowRows();
   $("#stressOn").checked = false;
   $("#stressYears").value = DEFAULTS.stressYears;
+  $("#stressStart").value = DEFAULTS.stressStart;
   $("#stressEq").value    = DEFAULTS.stressEq;
   $("#stressDebt").value  = DEFAULTS.stressDebt;
   syncStress();
