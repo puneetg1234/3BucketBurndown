@@ -590,7 +590,7 @@ function parseRupees(raw){
   // bare-c rule placed any earlier would read fifty lakh as fifty crore.
   const UNITS = [
     [/(crores|crore|cr)$/, 1e7],
-    [/(lakhs|lakh)$/, 1e5],
+    [/(lakhs|lakh|lacs|lac)$/, 1e5],
     [/(thousand|k)$/, 1e3],
     [/c$/, 1e7],
     [/l$/, 1e5]
