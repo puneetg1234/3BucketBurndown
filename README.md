@@ -47,6 +47,13 @@ What the suite pins down:
   laid out at, so labels are not scaled down with it; the suite checks the smallest label
   across widths from 320px to 900px, and that the tooltip reads its own geometry rather than
   a fixed one.
+- **The page is usable without sight.** Every input has an accessible name and all thirty
+  grid cells are named distinctly; both warnings are live regions; and the chart's accessible
+  name is rebuilt each render with the real figures, so it reports the opening and closing
+  corpus, whether spending was funded, the failure year, and any slump.
+- **Nothing is unreachable by a screen reader.** Every input carries a distinct accessible
+  name, the two warnings are live regions, and the chart's accessible name is rebuilt on each
+  render carrying the real figures, the failure year and any slump.
 - Plus cash-flow timing and recurrence, the today's-rupees toggle, CSV export with and
   without the optional columns, and a spread of edge cases.
 
