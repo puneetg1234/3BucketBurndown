@@ -1065,6 +1065,211 @@ function suiteCsvAndPrint() {
   ok('and it is refreshed on each render', q.text('#printStamp').length > 0 && stamp.length > 0);
 }
 
+/* ------------------------------------------------- 12. bucket 3 glide path */
+
+function suiteGlide() {
+  group('Bucket 3 glide path');
+  const p = boot();
+
+  ok('toggle defaults off', p.el('#glideOn').checked === false);
+  ok('target weights start disabled',
+    [...p.d.querySelectorAll('input[data-g]')].every(e => e.disabled));
+
+  /* Inert when off, and inert when ticked over an empty target row. */
+  p.set('#corpus', '7cr');
+  const base = p.snapshot();
+  p.check('#glideOn', true);
+  ok('ticked with a target changes the result', p.snapshot() !== base);
+  [0, 0, 0, 0, 0].forEach((v, i) => p.set(`input[data-g="${i}"]`, v));
+  ok('an empty target row is inert', p.snapshot() === base);
+  p.check('#glideOn', false);
+  ok('switching off restores the page exactly', p.snapshot() === base);
+
+  /* Drifting to the mix you already hold must change nothing at all. */
+  const a = boot(), b = boot();
+  a.set('#corpus', '4.2cr');
+  b.set('#corpus', '4.2cr').check('#glideOn', true);
+  [0, 80, 20, 0, 0].forEach((v, i) => b.set(`input[data-g="${i}"]`, v));
+  /* The page announces the glide in the note and on the bucket card, so the snapshots
+     differ by design — it is the arithmetic that must be untouched. */
+  const numbers = q => q.d.querySelector('#years tbody').innerHTML;
+  ok('drifting to the mix already held leaves every figure unchanged',
+    numbers(a) === numbers(b));
+
+  /* A rescale is silent arithmetic, so it has to be visible — the same way the asset matrix
+     flags its own rows: a red total and a red line saying what is being done. */
+  const g = boot();
+  const sumCell = () => g.el('#glideSum');
+  const warnText = () => g.el('#glideWarn').style.display === 'block' ? g.text('#glideWarn') : '';
+  ok('nothing is flagged while the feature is off',
+    !sumCell().classList.contains('off') && warnText() === '');
+  g.check('#glideOn', true);
+  ok('a row totalling 100 is not flagged',
+    !sumCell().classList.contains('off') && warnText() === '');
+
+  g.set('input[data-g="2"]', 50);
+  ok('a row totalling 90 turns the total red', sumCell().classList.contains('off'),
+    sumCell().textContent);
+  ok('and says it is being rescaled', /rescaled to 100/.test(warnText()), warnText());
+  ok('the warning is styled as a warning, like the matrix ones',
+    g.el('#glideWarn').className === 'warn');
+
+  g.set('input[data-g="2"]', 80);
+  ok('a row totalling 120 is flagged too',
+    sumCell().classList.contains('off') && /120/.test(warnText()), warnText());
+
+  [0, 0, 0, 0, 0].forEach((v, i) => g.set(`input[data-g="${i}"]`, v));
+  ok('an empty row says the glide is not being applied',
+    /not being applied/.test(warnText()), warnText());
+
+  g.set('input[data-g="1"]', -20);
+  g.set('input[data-g="2"]', 120);
+  ok('a negative weight is called out, as the matrix does',
+    /Negative weights/.test(warnText()), warnText());
+
+  g.set('input[data-g="1"]', 20);
+  g.set('input[data-g="2"]', 60);
+  g.set('input[data-g="3"]', 20);
+  ok('fixing the row clears both the red and the warning',
+    !sumCell().classList.contains('off') && warnText() === '');
+  g.check('#glideOn', false);
+  ok('switching off clears the warning', warnText() === '');
+
+  /* Closed form. One asset at 10%, drifting to one at 0%, nothing withdrawn: each year's
+     balance is the previous times (1 + the interpolated rate), with no compounding tricks
+     to hide an off-by-one in the progress fraction. */
+  function glideRig(horizon) {
+    const q = boot();
+    q.set('#mEF', 0).set('#mB1', 0).set('#mB2', 0);
+    q.set('#expense', 0).set('#inflation', 0).set('#horizon', horizon).set('#corpus', 10000000);
+    [10, 0, 0, 0, 0].forEach((v, i) => q.set(`input[data-k="ret"][data-i="${i}"]`, v));
+    [100, 0, 0, 0, 0].forEach((v, i) => q.set(`input[data-k="w"][data-b="3"][data-i="${i}"]`, v));
+    q.check('#glideOn', true);
+    [0, 0, 100, 0, 0].forEach((v, i) => q.set(`input[data-g="${i}"]`, v));
+    return q;
+  }
+  const H = 11, rig = glideRig(H);
+  let expect = 10000000, worst = 0;
+  for (let y = 1; y <= H; y++) {
+    expect *= 1 + (10 * (1 - (y - 1) / (H - 1))) / 100;
+    const got = rig.money(rig.cols(y).b3);
+    worst = Math.max(worst, Math.abs(got - expect) / expect);
+  }
+  ok('every year matches the closed form', worst < 1e-5,
+    `worst relative error ${(worst * 100).toExponential(2)}%`);
+
+  /* The two endpoints are the whole contract: first year at the opening mix, last at target. */
+  const two = glideRig(2);
+  ok('year 1 runs at the opening mix', Math.abs(two.money(two.cols(1).b3) - 11000000) < 2,
+    two.money(two.cols(1).b3).toLocaleString('en-IN'));
+  ok('the final year runs at the target mix', Math.abs(two.money(two.cols(2).b3) - 11000000) < 2);
+
+  /* Past the horizon the drift has to stop, not keep extrapolating into negative weights. */
+  const far = boot();
+  far.set('#mEF', 0).set('#mB1', 0).set('#mB2', 0);
+  far.set('#inflation', 0).set('#horizon', 5).set('#corpus', 10000000).set('#expense', 50000);
+  [10, 0, 0, 0, 0].forEach((v, i) => far.set(`input[data-k="ret"][data-i="${i}"]`, v));
+  far.setAll('tax', 0);
+  [100, 0, 0, 0, 0].forEach((v, i) => far.set(`input[data-k="w"][data-b="3"][data-i="${i}"]`, v));
+  far.check('#glideOn', true);
+  [0, 0, 100, 0, 0].forEach((v, i) => far.set(`input[data-g="${i}"]`, v));
+  const bal5 = far.money(far.cols(5).total), annual = 50000 * 12;
+  const expectFail = 5 + Math.floor(bal5 / annual) + 1;
+  // The failure lands beyond the horizon, which the verdict reports in its other branch,
+  // so read the year out of the sentence rather than through failYear().
+  const anyFailYear = +((far.verdict().match(/year (\d+)/) || [])[1] || 0);
+  ok('the mix holds at target past the horizon',
+    Math.abs(anyFailYear - expectFail) <= 1,
+    `expected around year ${expectFail}, got ${anyFailYear}`);
+  ok('and the weights never extrapolate past the target', anyFailYear > 5);
+
+  /* A drifting mix drifts its tax rate too. */
+  const taxRun = glideOn => {
+    const q = boot();
+    q.set('#corpus', '4.2cr').set('#horizon', 30);
+    q.setAll('ret', 8);
+    [0, 0, 50, 0, 0].forEach((v, i) => q.set(`input[data-k="tax"][data-i="${i}"]`, v));
+    [100, 0, 0, 0, 0].forEach((v, i) => q.set(`input[data-k="w"][data-b="3"][data-i="${i}"]`, v));
+    if (glideOn) {
+      q.check('#glideOn', true);
+      [0, 0, 100, 0, 0].forEach((v, i) => q.set(`input[data-g="${i}"]`, v));
+    }
+    let t = 0;
+    for (let n = 1; n < q.rows().length; n++) t += q.money(q.cols(n).tax);
+    return t;
+  };
+  const taxOff = taxRun(false), taxOn = taxRun(true);
+  ok('drifting into a higher-taxed asset raises the tax paid', taxOn > taxOff,
+    `₹${taxOff.toLocaleString('en-IN')} -> ₹${taxOn.toLocaleString('en-IN')}`);
+
+  /* Slump and glide both rewrite Bucket 3's return. The slump sets the RATES, the glide
+     sets the WEIGHTS, and a slump year has to use the rates against that year's weights. */
+  const both = boot();
+  both.set('#mEF', 0).set('#mB1', 0).set('#mB2', 0);
+  both.set('#expense', 0).set('#inflation', 0).set('#horizon', 5).set('#corpus', 10000000);
+  [10, 10, 0, 0, 0].forEach((v, i) => both.set(`input[data-k="ret"][data-i="${i}"]`, v));
+  [100, 0, 0, 0, 0].forEach((v, i) => both.set(`input[data-k="w"][data-b="3"][data-i="${i}"]`, v));
+  both.check('#glideOn', true);
+  [0, 0, 100, 0, 0].forEach((v, i) => both.set(`input[data-g="${i}"]`, v));
+  both.check('#stressOn', true).set('#stressStart', 3).set('#stressYears', 1)
+      .set('#stressEq', -40).set('#stressDebt', 4);
+  let bal = 10000000;
+  for (let y = 1; y <= 5; y++) {
+    const prog = (y - 1) / 4;
+    const eq = y === 3 ? -40 : 10, de = y === 3 ? 4 : 0;
+    bal *= 1 + (100 * (1 - prog) * eq + 100 * prog * de) / 10000;
+  }
+  ok('a slump year applies slump rates to that year\'s glided weights',
+    Math.abs(both.money(both.cols(5).b3) - bal) / bal < 1e-5,
+    `expected ₹${Math.round(bal).toLocaleString('en-IN')}, got ₹${both.money(both.cols(5).b3).toLocaleString('en-IN')}`);
+
+  /* Weights describe proportions, so the totals they are written with must not matter. */
+  const shape = t => {
+    const q = boot();
+    q.set('#corpus', '4.2cr').check('#glideOn', true);
+    t.forEach((v, i) => q.set(`input[data-g="${i}"]`, v));
+    return q.snapshot();
+  };
+  ok('a target row is rescaled, so 30/90 means the same as 15/45',
+    shape([0, 30, 90, 0, 0]) === shape([0, 15, 45, 0, 0]));
+
+  /* Harsher de-risking cannot come out ahead in a steady-return model. */
+  const outcome = t => {
+    const q = boot();
+    q.set('#corpus', '4.2cr');
+    if (t) { q.check('#glideOn', true); t.forEach((v, i) => q.set(`input[data-g="${i}"]`, v)); }
+    return q.failYear();
+  };
+  const none = outcome(null), mild = outcome([0, 60, 40, 0, 0]), hard = outcome([0, 0, 0, 0, 100]);
+  ok('a harsher drift is never better', none >= mild && mild >= hard,
+    `none ${none === Infinity ? 'clears' : none}, mild ${mild}, all-liquid ${hard}`);
+
+  /* Carried by the link and recorded in the CSV. */
+  const sh = boot();
+  sh.set('#corpus', '7cr').check('#glideOn', true);
+  [10, 15, 50, 25, 0].forEach((v, i) => sh.set(`input[data-g="${i}"]`, v));
+  sh.click('#share');
+  const frag = sh.fragment();
+  ok('the link carries the target weights', /g=10,15,50,25,0/.test(frag), frag);
+  ok('round trip: glide path', sh.snapshot() === boot(frag).snapshot());
+  const csv = sh.csv();
+  ok('the CSV records the glide and its target',
+    /^Bucket 3 glide path,"?on/m.test(csv) &&
+    /Bucket 3 target weights, %",10,15,50,25,0/.test(csv),
+    (csv.split('\n').find(l => /glide path/.test(l)) || '').slice(0, 60));
+  ok('and records it as off when it is off', /^Bucket 3 glide path,off$/m.test(boot().csv()));
+
+  /* Reset. */
+  const r = boot();
+  r.check('#glideOn', true);
+  [1, 2, 3, 4, 5].forEach((v, i) => r.set(`input[data-g="${i}"]`, v));
+  r.reset();
+  ok('reset unticks the glide', r.el('#glideOn').checked === false);
+  ok('reset restores the default target and disables it',
+    r.el('input[data-g="2"]').value === '60' && r.el('input[data-g="2"]').disabled === true,
+    r.el('input[data-g="2"]').value);
+}
+
 /* -------------------------------------------------------------- 9. edges */
 
 function suiteEdges() {
@@ -1145,6 +1350,7 @@ suiteRupeeEntry();
 suiteSmallScreens();
 suiteAccessibility();
 suiteCsvAndPrint();
+suiteGlide();
 suiteEdges();
 
 const secs = ((Date.now() - started) / 1000).toFixed(1);

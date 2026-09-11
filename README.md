@@ -57,6 +57,10 @@ What the suite pins down:
 - **The CSV explains itself.** Every assumption behind the numbers is written into the file,
   along with a link that rebuilds the plan — and the suite checks that link actually round-trips
   rather than merely existing.
+- **The glide path is checked against a closed form.** With one asset drifting to another and
+  nothing withdrawn, every year's balance must equal the previous one times the interpolated
+  rate, so an off-by-one in the progress fraction cannot hide. The endpoints, the clamp past
+  the horizon, the drifting tax rate, and the interaction with a slump are each pinned too.
 - Plus cash-flow timing and recurrence, the today's-rupees toggle, the print stylesheet, and a
   spread of edge cases.
 
