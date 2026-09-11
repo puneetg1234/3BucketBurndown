@@ -230,6 +230,48 @@ table.flows tbody tr:last-child td{padding-bottom:2px}
 @media (max-width:420px){
   .cascade{grid-template-columns:1fr}
 }
+
+/* ---------- print ---------- */
+.print-stamp{display:none}
+@media print{
+  @page{margin:14mm}
+  html,body{background:#fff}
+  body{font-size:11pt;line-height:1.45}
+  .wrap{max-width:none;padding:0}
+
+  /* the sidebar is the record of what was assumed, so it prints — but as a column above the
+     results rather than beside them, and with nothing that can scroll away */
+  .layout{display:block}
+  .rail,.rail-inner{position:static;max-height:none;overflow:visible}
+  .rail-inner{border:0;padding:0}
+  .rail{margin-bottom:14pt}
+  .table-wrap,.matrix-scroll{max-height:none;overflow:visible}
+
+  /* controls mean nothing on paper */
+  .rail-actions,.solve-actions,#solveApply,#flowAdd,.tip,.share-out{display:none!important}
+  input,textarea{border:0!important;background:transparent!important;padding:1px 2px!important;
+    color:var(--ink)!important;-webkit-appearance:none;appearance:none}
+  input:disabled{color:var(--muted)!important}
+
+  .print-stamp{display:block;color:var(--muted);font-size:9pt;margin:6pt 0 0}
+  .masthead{border-bottom:1px solid #999}
+  .verdict{font-size:20pt;max-width:none}
+
+  /* keep a figure and its caption on one page, and repeat table headings across pages */
+  .chart-card,.bucket,.table-head,fieldset{break-inside:avoid;page-break-inside:avoid}
+  table.years thead{display:table-header-group}
+  table.years tr{break-inside:avoid;page-break-inside:avoid}
+  table.years th,table.years td{padding:3pt 6pt;font-size:9pt}
+  table.years thead th{position:static}
+  table.years tbody th{position:static;background:transparent}
+  .cascade{grid-template-columns:repeat(4,1fr);gap:6pt}
+  .bucket .role{min-height:0}
+  svg{max-height:9cm}
+
+  /* a printout is read away from the screen, so spell the links out */
+  footer a[href^="mailto:"]::after{content:""}
+  footer{break-before:auto}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -246,6 +288,8 @@ table.flows tbody tr:last-child td{padding-bottom:2px}
     <br>- Optionally use <b>Lumpy Cash Flows</b> to account for any non-regular future cashflows.
     <br>- <i>Best viewed on a laptop. Works on a phone but the wider tables scroll sideways.</i></p>
   </header>
+
+  <p class="print-stamp" id="printStamp"></p>
 
   <div class="layout">
 
@@ -445,6 +489,7 @@ table.flows tbody tr:last-child td{padding-bottom:2px}
           <button class="btn" id="reset" type="button">Reset to defaults</button>
           <button class="btn" id="csv" type="button">Download CSV</button>
           <button class="btn" id="share" type="button">Copy share link</button>
+          <button class="btn" id="print" type="button">Print / Save as PDF</button>
           <p class="share-out" id="shareOut" aria-live="polite"></p>
         </div>
       </div>
@@ -1205,10 +1250,27 @@ function validate(s){
   $("#sizeWarn").style.display = short ? "block" : "none";
 }
 
+/* ---------- printing ----------
+   The button only opens the browser's print dialog; choosing "Save as PDF" in there is the
+   user's step, which is why it is not labelled as a download. Chrome, Safari, Edge and
+   Firefox all offer that destination, and all of them render the chart as vector rather
+   than a screenshot, so the output stays sharp at any zoom.                              */
+function stampNow(){
+  $("#printStamp").textContent =
+    "Generated " + new Date().toLocaleString("en-IN") + " \u2014 " + location.href.split("#")[0];
+}
+$("#print").addEventListener("click", ()=>{
+  stampNow();
+  window.print();
+});
+// Ctrl+P and the browser menu bypass the button, so refresh the stamp for those too.
+window.addEventListener("beforeprint", stampNow);
+
 /* ---------- run ---------- */
 let lastRun = null;   // named so it no longer shadows the block-scoped `last` in simulate()
 function run(){
   const s = readState();
+  stampNow();
   validate(s);
   const res  = simulate(s);
   const view = res.rows.filter(r => r.year <= s.horizon);
@@ -1449,16 +1511,86 @@ $("#reset").addEventListener("click", ()=>{
   run();
 });
 
+/* ================= CSV export =================
+   The balances alone are not much use a month later: they are the output of a particular
+   set of assumptions, and without those the file cannot be read, checked or rebuilt. So the
+   assumptions go in the file, followed by the projection, followed by the link that
+   reproduces the whole thing. Note the consequence: the table header is no longer the first
+   line, so anything reading this programmatically has to skip past the assumption block.  */
+const ASSET_NAMES = ["Equity LargeCap","Equity MidCap/FlexiCap","Debt Bonds/GILT",
+                     "Debt UltraShort","Debt-Liquid/Equity-Arb"];
+
+// quote anything a spreadsheet would otherwise split or mangle
+function csvCell(v){
+  const t = String(v == null ? "" : v);
+  return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+}
+const csvRow = cells => cells.map(csvCell).join(",");
+
+function csvAssumptions(s){
+  const L = [];
+  L.push(csvRow(["Three-bucket Burndown Model"]));
+  L.push(csvRow(["Generated", new Date().toLocaleString("en-IN")]));
+  L.push("");
+  L.push(csvRow(["PLAN"]));
+  L.push(csvRow(["Retirement corpus", Math.round(s.corpus)]));
+  L.push(csvRow(["Monthly expenses", Math.round(s.expense)]));
+  L.push(csvRow(["Inflation, % a year", +(s.inflation * 100).toFixed(4)]));
+  L.push(csvRow(["Years projected", s.horizon]));
+  L.push("");
+  L.push(csvRow(["OPENING SIZES, in months of expenses"]));
+  L.push(csvRow(["Emergency fund", s.months[0]]));
+  L.push(csvRow(["Bucket 1", s.months[1]]));
+  L.push(csvRow(["Bucket 2", s.months[2]]));
+  L.push(csvRow(["Bucket 3", "whatever is left"]));
+  L.push("");
+  L.push(csvRow(["ASSET ASSUMPTIONS"]));
+  L.push(csvRow([""].concat(ASSET_NAMES)));
+  L.push(csvRow(["Return, % a year pre-tax"].concat(s.ret)));
+  L.push(csvRow(["Tax on gains, %"].concat(s.tax)));
+  ["Emergency fund","Bucket 1","Bucket 2","Bucket 3"].forEach((nm, b) =>
+    L.push(csvRow([nm + " weights, %"].concat(s.w[b]))));
+  L.push("");
+  L.push(csvRow(["OPTIONS"]));
+  L.push(csvRow(["Slump start", s.stress
+    ? `years ${slumpFirst(s)} to ${slumpLast(s)} at ${s.stress.eq}% equity and ${s.stress.debt}% debt`
+    : "off"]));
+  if (!s.flows) L.push(csvRow(["Lumpy cash flows", "off"]));
+  else {
+    L.push(csvRow(["Lumpy cash flows", s.flows.real
+      ? "on, amounts in today's rupees" : "on, amounts as literal figures"]));
+    s.flows.rows.forEach(f => L.push(csvRow([
+      "  " + (f.rep ? `year ${f.year} onward` : `year ${f.year}`),
+      Math.round(f.amt)])));
+  }
+  L.push("");
+  return L;
+}
+
+function csvFile(s, view){
+  const L = csvAssumptions(s);
+  L.push(csvRow(["YEAR-END BALANCES"]));
+  L.push(csvRow(["Year", "Monthly expense"]
+    .concat(s.flows ? ["Cash flow"] : [])
+    .concat(["Emergency fund (sealed)", "Bucket 1", "Bucket 2", "Bucket 3",
+             "Spendable (B1+B2+B3)", "Total Corpus incl. emergency fund", "Tax paid"])));
+  view.forEach(r => {
+    const c = r.bal.map(Math.round), spendable = c[1] + c[2] + c[3];
+    L.push(csvRow([r.year, Math.round(r.monthly)]
+      .concat(s.flows ? [Math.round(r.flow)] : [])
+      .concat(c, [spendable, c[0] + spendable, Math.round(r.tax)])));
+  });
+  L.push("");
+  L.push(csvRow(["Every balance above is pre-tax. Unrealised gains have not been taxed, so the corpus is worth less than it reads once redeemed."]));
+  L.push(csvRow(["Returns are assumed steady every year. Real markets are not. This is a planning template, not advice."]));
+  L.push(csvRow(["Send feedback and comments to", "puneetg123@yahoo.com"]));
+  L.push(csvRow(["Reopen this exact plan", shareURL()]));
+  return L.join("\n");
+}
+
 $("#csv").addEventListener("click", ()=>{
   const s = readState();
-  const head = "Year,Monthly expense," + (s.flows ? "Cash flow," : "")
-    + "Emergency fund (sealed),Bucket 1,Bucket 2,Bucket 3,Spendable (B1+B2+B3),Total Corpus incl. emergency fund,Tax paid\n";
-  const body = lastRun.view.map(r => {
-    const c = r.bal.map(Math.round), spendable = c[1] + c[2] + c[3];
-    const flow = s.flows ? [Math.round(r.flow)] : [];
-    return [r.year, Math.round(r.monthly), ...flow, ...c, spendable, c[0] + spendable, Math.round(r.tax)].join(",");
-  }).join("\n");
-  const url = URL.createObjectURL(new Blob([head+body], {type:"text/csv"}));
+  const url = URL.createObjectURL(new Blob([csvFile(s, lastRun.view)], {type:"text/csv"}));
   const a = document.createElement("a");
   a.href = url; a.download = "three-bucket-burndown.csv";
   document.body.appendChild(a); a.click(); a.remove();

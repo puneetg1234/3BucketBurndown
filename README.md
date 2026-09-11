@@ -54,8 +54,11 @@ What the suite pins down:
 - **Nothing is unreachable by a screen reader.** Every input carries a distinct accessible
   name, the two warnings are live regions, and the chart's accessible name is rebuilt on each
   render carrying the real figures, the failure year and any slump.
-- Plus cash-flow timing and recurrence, the today's-rupees toggle, CSV export with and
-  without the optional columns, and a spread of edge cases.
+- **The CSV explains itself.** Every assumption behind the numbers is written into the file,
+  along with a link that rebuilds the plan — and the suite checks that link actually round-trips
+  rather than merely existing.
+- Plus cash-flow timing and recurrence, the today's-rupees toggle, the print stylesheet, and a
+  spread of edge cases.
 
 The suite has been mutation-tested: deliberately reintroducing bugs (spending the emergency
 fund, taxing paper gains, reverting the refill order, shifting recurring flows by a year,
