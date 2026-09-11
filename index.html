@@ -284,6 +284,7 @@ table.flows tbody tr:last-child td{padding-bottom:2px}
     <br>- Corpus is split across an Emergency Fund and three buckets. Each bucket refills once a year from the one behind it.
     Emergency fund is sealed with no withdrawals. Redemptions are taxed.
     <br>- Optionally use <b>Additional Solver</b> to work backwards.
+    <br>- Optionally use <b>Bucket 3 Glide Path</b> to set auto asset-allocation and glide to target weights over the years.
     <br>- Optionally use <b>Slump Start</b> to factor-in current market returns.
     <br>- Optionally use <b>Lumpy Cash Flows</b> to account for any non-regular future cashflows.
     <br>- <i>Best viewed on a laptop. Works on a phone but the wider tables scroll sideways.</i></p>
@@ -434,6 +435,43 @@ table.flows tbody tr:last-child td{padding-bottom:2px}
           <p class="warn" id="weightWarn" role="status" aria-live="polite"></p>
         </fieldset>
 
+        <fieldset id="glideBox" class="off">
+          <legend>Bucket 3 Glide Path (Optional)</legend>
+          <p class="hint">Select this if you want more realistic view with automatic asset-allocation baked-in. Set where Bucket&nbsp;3 should end up at end of the horizon tenure. Allocation slowly and linearly drifts towards it.</p>
+          <label class="stress-toggle">
+            <input type="checkbox" id="glideOn">
+            <span>Drift Bucket 3 to a target mix<span class="sub">Year 1 uses the Bucket&nbsp;3 weights from above, while the final year uses these. Weights for every year in between sits proportionally along the way. OFF by default.</span></span>
+          </label>
+          <div class="matrix-scroll">
+            <table class="matrix" id="glideTable">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Equity<br>LargeCap</th>
+                  <th>Equity<br>MidCap/FlexiCap</th>
+                  <th>Debt<br>Bonds/GILT</th>
+                  <th>Debt<br>UltraShort</th>
+                  <th>Debt-Liquid<br>Equity-Arb</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th><span class="swatch" style="background:var(--b3)"></span>Target</th>
+                  <td><input class="narrow" data-g="0" type="number" min="0" step="5" value="0" disabled aria-label="Bucket 3 target weight in Equity LargeCap, percent"></td>
+                  <td><input class="narrow" data-g="1" type="number" min="0" step="5" value="20" disabled aria-label="Bucket 3 target weight in Equity MidCap/FlexiCap, percent"></td>
+                  <td><input class="narrow" data-g="2" type="number" min="0" step="5" value="60" disabled aria-label="Bucket 3 target weight in Debt Bonds/GILT, percent"></td>
+                  <td><input class="narrow" data-g="3" type="number" min="0" step="5" value="20" disabled aria-label="Bucket 3 target weight in Debt UltraShort, percent"></td>
+                  <td><input class="narrow" data-g="4" type="number" min="0" step="5" value="0" disabled aria-label="Bucket 3 target weight in Debt-Liquid/Equity-Arb, percent"></td>
+                  <td class="sum" role="status" id="glideSum">100</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="warn" id="glideWarn" role="status" aria-live="polite"></p>
+          <p class="stress-echo" id="glideEcho"></p>
+        </fieldset>
+
         <fieldset id="stressBox" class="off">
           <legend>Slump Start (Optional)</legend>
           <p class="hint">Select this if your current market returns are lower(or higher) than expected long term projected market returns.</p>
@@ -559,9 +597,16 @@ table.flows tbody tr:last-child td{padding-bottom:2px}
 
     <h4>Solving backwards (Additional Solver - Optional)</h4>
         <p>OFF by default; the two solve buttons search for the number that can just barely satisfy the tenure horizon, keeping every other input you specified as frozen. They run the same model the rest of the page runs, so the answers already account for tax on each refill, for the emergency fund being filled first, and for the Bucket&nbsp;1 and&nbsp;2 targets rising with inflation.</p>
-		<p><b>Highest monthly spend:</b> largest amount available for spending with given corpus and tenure.<br><b>Smallest corpus:</b> Lowest corpus needed to fund the given monthly expense and tenure.</p>
-		<p>Note: Both answers are rounded the safe way — the spend down to the nearest ₹500, the corpus up to the nearest ₹50,000 — and then re-checked against the model, so the figure shown always clears rather than sitting a rupee on the wrong side of the line. Changing any input clears the answer, because a solved number stops being true the moment the inputs behind it move.</p>
+		    <p><b>Highest monthly spend:</b> largest amount available for spending with given corpus and tenure.<br><b>Smallest corpus:</b> Lowest corpus needed to fund the given monthly expense and tenure.</p>
+		    <p>Note: Both answers are rounded the safe way — the spend down to the nearest ₹500, the corpus up to the nearest ₹50,000 — and then re-checked against the model, so the figure shown always clears rather than sitting a rupee on the wrong side of the line. Changing any input clears the answer, because a solved number stops being true the moment the inputs behind it move.</p>
         <p>Read them as the edge of the cliff, not as a target. A corpus that <i>just</i> funds the tenure has no margin for a bad first decade, for a year of spending you did not plan, or for living longer than the tenure you input. The steady-return assumption below makes that edge look far firmer than it is.</p>
+
+    <h4>Bucket 3 Glide Path (Optional)</h4>
+        <p>OFF by default; ticked box over an empty target row changes nothing. With it on, Bucket&nbsp;3's asset mix moves linearly and yearly(or glide) from the weights in the matrix to the target weights.</p>
+        <p>The weights for emergency fund and Buckets&nbsp;1 and&nbsp;2 do not change over time, hance not drift for them.</p>
+        <p>The <i>blended tax</i> rate also drifts with the mix. e.g Bucket&nbsp;3 starting at 80% mid-cap is taxed at 12.5% on its gains; While when it gets to 60% gilts is taxed closer to 18%.<br>Note: De-risking with glided asset allocation like this therefore penalises twice — a lower return, and a higher tax on redemptions.</p>
+        <p>Both rows are rescaled to 100 before the drift is worked out. E.g. A target row adding up to 90 describes the same portfolio as one adding up to 100.</p>
+        <p><b>Caution:</b> Drifting the mix means selling one asset class and buying another inside Bucket&nbsp;3 every year. This model tracks cost basis per bucket rather than per holding, so those switches are free here. In reality each one realises gains and is taxed. A glide path therefore looks cheaper on this page than it would be in your account, and the longer and steeper the drift, the wider that gap.</p>
 
     <h4>Slump Start (Optional)</h4>
         <p>OFF by default: Enabling this forces a window of years — as many as you set, beginning in the year you name — to the returns given here, after which the matrix rates resume for the rest of the projection. Both equity columns take the equity figure and all three debt columns take the debt figure.</p>
@@ -601,7 +646,7 @@ const DEFAULTS = {
   mEF:12, mB1:18, mB2:48,
   ret:[9,10,6,5.5,5], tax:[12.5,12.5,20,30,30],
   stressYears:3, stressStart:1, stressEq:-10, stressDebt:6,
-  flowRows:3,
+  flowRows:3, glide:[0,20,60,20,0],
   w:[[0,0,0,0,100],[0,0,0,100,0],[20,0,80,0,0],[0,80,20,0,0]]
 };
 
@@ -696,6 +741,15 @@ function readState(){
 
   // Null unless the box is ticked. Everything downstream keys off that, so an unticked box
   // leaves the model on exactly the path it took before this feature existed.
+  // Null unless the box is ticked and the target row carries some weight, so a ticked box
+  // over an empty row is as inert as an unticked one.
+  s.glide = null;
+  if ($("#glideOn").checked){
+    const t = [0,0,0,0,0];
+    $$('input[data-g]').forEach(el => t[+el.dataset.g] = Math.max(0, num(el)));
+    if (t.reduce((a,b)=>a+b,0) > 0.01) s.glide = { target: t };
+  }
+
   // Null unless the box is ticked AND at least one row carries a real amount, so a ticked
   // box with nothing filled in is just as inert as an unticked one.
   s.flows = null;
@@ -717,6 +771,35 @@ function readState(){
     debt:  Math.max(-99, Math.min(100, num($("#stressDebt"))))
   } : null;
   return s;
+}
+
+/* ================= Bucket 3 glide path =================
+   Year 1 runs on the opening weights, the final year of the horizon runs on the target, and
+   every year in between sits proportionally along the straight line between them. Past the
+   horizon the mix simply stays at the target.
+
+   Both rows are normalised to 100 before interpolating, so the drift is between the two
+   effective allocations rather than between whatever totals happen to be typed — a target
+   row summing to 90 describes the same portfolio as one summing to 100.                  */
+function normWeights(row){
+  const t = row.reduce((a,b)=>a+b,0);
+  return t > 0 ? row.map(v => v * 100 / t) : row.slice();
+}
+function glideProgress(s, y){
+  const H = Math.max(2, s.horizon);
+  return Math.max(0, Math.min(1, (y - 1) / (H - 1)));
+}
+// Bucket 3's weights for projection year y.
+function glideRow(s, y){
+  if (!s.glide) return s.w[3];
+  const p = glideProgress(s, y);
+  const a = normWeights(s.w[3]), b = normWeights(s.glide.target);
+  return a.map((v, i) => v + (b[i] - v) * p);
+}
+// All four buckets' weights for year y — only Bucket 3 ever moves.
+function yearWeights(s, y){
+  if (!s.glide) return s.w;
+  return [s.w[0], s.w[1], s.w[2], glideRow(s, y)];
 }
 
 // net cash flow landing in projection year y, positive in and negative out
@@ -798,11 +881,15 @@ function simulate(s){
   let taxSoFar = 0;
 
   for (let y = 1; y <= CAP; y++){
-    // Buckets otherwise keep the fixed gross set at construction. Only a live stress window
-    // rewrites it, and only for the years inside that window.
-    if (s.stress){
-      const rr = inSlumpYear(s, y) ? stressRates(s.stress) : s.ret;
-      bk.forEach((b,i)=> b.g = weightedGross(s.w[i], rr));
+    // Buckets otherwise keep the fixed gross set at construction. A live stress window or a
+    // live glide path rewrites it; with neither running, nothing here touches the model.
+    if (s.stress || s.glide){
+      const rr = (s.stress && inSlumpYear(s, y)) ? stressRates(s.stress) : s.ret;
+      const wy = yearWeights(s, y);
+      bk.forEach((b,i)=> b.g = weightedGross(wy[i], rr));
+      // A drifting mix drifts its blended tax rate too: a bucket that has become mostly
+      // bonds is taxed as bonds when it is redeemed, not as the equity it used to hold.
+      if (s.glide) bk[3].t = weightedGross(wy[3], s.tax);
     }
 
     const monthly = s.expense * Math.pow(1 + s.inflation, y-1);
@@ -861,7 +948,9 @@ function simulate(s){
   }
 
   const last = rows[rows.length-1];
-  return { rows, stats, failYear: last.shortfall > 0.5 ? last.year : null };
+  return { rows, stats,
+    glideEnd: s.glide ? weightedGross(glideRow(s, s.horizon), s.ret) : undefined,
+    failYear: last.shortfall > 0.5 ? last.year : null };
 }
 
 /* ---------- verdict ---------- */
@@ -1016,7 +1105,8 @@ function renderCascade(res, view){
       <h4>${NAMES[i]}</h4>
       <p class="role">${ROLES[i]}</p>
       <div class="val num">${money(open.bal[i])}</div>
-      <div class="meta">${(st.gross*100).toFixed(2)}% gross return<br>${
+      <div class="meta">${(st.gross*100).toFixed(2)}% gross return${
+        i === 3 && res.glideEnd !== undefined ? `, drifting to ${(res.glideEnd*100).toFixed(2)}%` : ""}<br>${
         i === 0 ? "never redeemed, so untaxed"
                 : `${(st.taxw*100).toFixed(1)}% on gains at redemption`}</div>
     </div>`).join("");
@@ -1288,6 +1378,10 @@ function run(){
       + [ins ? `${ins} inflow${ins>1?"s":""}` : "", outs ? `${outs} outflow${outs>1?"s":""}` : ""].filter(Boolean).join(" and ")
       + ` applied on top of the monthly spend.`;
   }
+  if (s.glide){
+    const g1 = weightedGross(glideRow(s, s.horizon), s.ret) * 100;
+    $("#verdictNote").textContent += ` Bucket 3 drifts to a ${g1.toFixed(2)}% gross mix by year ${s.horizon}.`;
+  }
   renderChart(res, s, view);
   renderCascade(res, view);
   renderTable(res, s, view);
@@ -1309,6 +1403,42 @@ function resetFlowRows(){
   $("#flowRows").innerHTML = "";
   for (let i = 0; i < DEFAULTS.flowRows; i++) addFlowRow();
 }
+function syncGlide(){
+  const on = $("#glideOn").checked;
+  $$('input[data-g]').forEach(el => el.disabled = !on);
+  $("#glideBox").classList.toggle("off", !on);
+  const sumCell = $("#glideSum"), echo = $("#glideEcho"), warn = $("#glideWarn");
+  const t = [0,0,0,0,0];
+  $$('input[data-g]').forEach(el => t[+el.dataset.g] = Math.max(0, num(el)));
+  const sum = t.reduce((a,b)=>a+b,0);
+  sumCell.textContent = Math.abs(sum - Math.round(sum)) < 0.005 ? Math.round(sum) : sum.toFixed(2);
+  sumCell.classList.toggle("off", on && Math.abs(sum - 100) > 0.01);
+
+  // Same treatment the asset matrix gives its own rows: the total turns red, and a red line
+  // says what is being done about it. A rescale is silent arithmetic otherwise.
+  const anyNeg = $$('input[data-g]').some(el => parseFloat(el.value) < 0);
+  const wmsg = !on ? "" : [
+    sum > 0.01 && Math.abs(sum - 100) > 0.01
+      ? `Target weights add up to ${Math.round(sum)} — being rescaled to 100 for the calculation.` : "",
+    sum <= 0.01
+      ? `No target weights set — the glide path is not being applied.` : "",
+    anyNeg ? `Negative weights are being treated as zero.` : ""
+  ].filter(Boolean).join(" ");
+  warn.textContent = wmsg;
+  warn.style.display = wmsg ? "block" : "none";
+
+  if (!on){ echo.textContent = ""; return; }
+  if (sum <= 0.01){ echo.textContent = ""; return; }
+  const s = readState();
+  const g0 = weightedGross(s.w[3], s.ret) * 100;
+  const g1 = weightedGross(glideRow(s, s.horizon), s.ret) * 100;
+  const t0 = weightedGross(s.w[3], s.tax) * 100;
+  const t1 = weightedGross(glideRow(s, s.horizon), s.tax) * 100;
+  echo.textContent =
+    `Bucket 3 drifts from ${g0.toFixed(2)}% gross to ${g1.toFixed(2)}% across ${s.horizon} years, `
+    + `and its blended tax rate from ${t0.toFixed(1)}% to ${t1.toFixed(1)}%.`;
+}
+
 function syncFlows(){
   const on = $("#flowsOn").checked;
   $$("#flowRows input").forEach(el => el.disabled = !on);
@@ -1361,6 +1491,11 @@ function shareURL(){
     const st = [$("#stressYears").value, $("#stressEq").value, $("#stressDebt").value];
     if (parseFloat($("#stressStart").value) !== 1) st.push($("#stressStart").value);
     q.push("s=" + st.join(","));
+  }
+  if ($("#glideOn").checked){
+    const t = [];
+    $$('input[data-g]').forEach(el => t[+el.dataset.g] = el.value);
+    q.push("g=" + t.join(","));
   }
   if ($("#flowsOn").checked){
     const rows = [];
@@ -1418,6 +1553,15 @@ function applyShareURL(){
     $("#stressStart").value = a[3] || 1;
     if (a[1]) $("#stressEq").value    = a[1];
     if (a[2]) $("#stressDebt").value  = a[2];
+    any = true;
+  }
+  if (p.has("g")){
+    $("#glideOn").checked = true;
+    const a = p.get("g").split(",");
+    $$('input[data-g]').forEach(el => {
+      const v = a[+el.dataset.g];
+      if (v !== undefined && v !== "") el.value = v;
+    });
     any = true;
   }
   if (p.has("l")){
@@ -1484,7 +1628,7 @@ function syncStress(){
     + ` at ${s.stress.eq}% equity and ${s.stress.debt}% debt, then the rates above resume.`;
 }
 
-document.addEventListener("input", e => { if (e.target.matches("input")){ clearSolve(); clearShare(); updateAmountEchoes(); syncStress(); syncFlows(); run(); } });
+document.addEventListener("input", e => { if (e.target.matches("input")){ clearSolve(); clearShare(); updateAmountEchoes(); syncStress(); syncFlows(); syncGlide(); run(); } });
 window.addEventListener("load", () => { if (lastRun) renderChart(lastRun.res, lastRun.s, lastRun.view); });
 window.addEventListener("resize", () => { if (lastRun) renderChart(lastRun.res, lastRun.s, lastRun.view); });
 
@@ -1498,6 +1642,8 @@ $("#reset").addEventListener("click", ()=>{
   $$('input[data-k="ret"]').forEach(el => el.value = DEFAULTS.ret[+el.dataset.i]);
   $$('input[data-k="tax"]').forEach(el => el.value = DEFAULTS.tax[+el.dataset.i]);
   $$('input[data-k="w"]').forEach(el => el.value = DEFAULTS.w[+el.dataset.b][+el.dataset.i]);
+  $("#glideOn").checked = false;
+  $$('input[data-g]').forEach(el => el.value = DEFAULTS.glide[+el.dataset.g]);
   $("#flowsOn").checked = false;
   $("#flowsReal").checked = true;
   resetFlowRows();
@@ -1508,6 +1654,7 @@ $("#reset").addEventListener("click", ()=>{
   $("#stressDebt").value  = DEFAULTS.stressDebt;
   syncStress();
   syncFlows();
+  syncGlide();
   run();
 });
 
@@ -1552,6 +1699,9 @@ function csvAssumptions(s){
     L.push(csvRow([nm + " weights, %"].concat(s.w[b]))));
   L.push("");
   L.push(csvRow(["OPTIONS"]));
+  L.push(csvRow(["Bucket 3 glide path", s.glide
+    ? "on, drifting to the target weights below" : "off"]));
+  if (s.glide) L.push(csvRow(["  Bucket 3 target weights, %"].concat(s.glide.target)));
   L.push(csvRow(["Slump start", s.stress
     ? `years ${slumpFirst(s)} to ${slumpLast(s)} at ${s.stress.eq}% equity and ${s.stress.debt}% debt`
     : "off"]));
@@ -1602,6 +1752,7 @@ applyShareURL();
 updateAmountEchoes();
 syncStress();
 syncFlows();
+syncGlide();
 run();
 </script>
 </body>
