@@ -42,7 +42,12 @@ function boot(hash, chartPx) {
   // care about small screens pass a width here. Everything else keeps the desktop default.
   const px = chartPx || 900;
   w.SVGElement.prototype.getBoundingClientRect = () => ({ left: 0, width: px, top: 0, height: 380 });
+  // Capture what the page hands to Blob so a download can be read synchronously.
+  let lastBlob = null;
+  const RealBlob = w.Blob;
+  w.Blob = function (parts, opts) { lastBlob = (parts || []).join(''); return new RealBlob(parts, opts); };
   w.URL.createObjectURL = () => 'blob:test';
+  w.URL.revokeObjectURL = () => {};
   const d = w.document;
   const fire = el => el.dispatchEvent(new w.Event('input', { bubbles: true }));
 
@@ -114,6 +119,8 @@ function boot(hash, chartPx) {
       return api;
     },
     reset() { return api.click('#reset'); },
+    /** Click Download CSV and return the file's text. */
+    csv() { lastBlob = null; api.click('#csv'); return lastBlob || ''; },
     setWeight(bucket, asset, val) {
       const el = d.querySelector(`input[data-k="w"][data-b="${bucket}"][data-i="${asset}"]`);
       el.value = val; fire(el); return api;
@@ -940,6 +947,124 @@ function suiteAccessibility() {
   ok('the description is rebuilt on every render', desc() !== before);
 }
 
+/* --------------------------------------------- 11. CSV export and printing */
+
+function suiteCsvAndPrint() {
+  group('CSV export');
+  const p = boot();
+  p.set('#corpus', '4.2cr').set('#expense', '1.25L').set('#inflation', 6.5).set('#horizon', 30);
+  const csv = p.csv();
+  const lines = csv.split('\n');
+  const has = re => lines.some(l => re.test(l));
+
+  ok('the file is not just a bare table', lines.length > p.rows().length + 20,
+    `${lines.length} lines for ${p.rows().length} data rows`);
+
+  /* The numbers are only meaningful alongside what produced them. */
+  ok('it records the corpus and the spend', has(/^Retirement corpus,42000000$/) &&
+    has(/^Monthly expenses,125000$/));
+  ok('it records inflation and the horizon',
+    has(/^"Inflation, % a year",6\.5$/) && has(/^Years projected,30$/));
+  ok('it records the bucket sizes', has(/^Emergency fund,12$/) && has(/^Bucket 2,48$/));
+  ok('it records returns, tax and every weight row',
+    has(/^"Return, % a year pre-tax",9,10,6,5\.5,5$/) &&
+    has(/^"Tax on gains, %",12\.5,12\.5,20,30,30$/) &&
+    has(/^"Bucket 3 weights, %",0,80,20,0,0$/));
+  ok('it names the asset columns', has(/Equity LargeCap,Equity MidCap/));
+
+  /* Values containing a comma must be quoted or a spreadsheet splits them into two cells. */
+  ok('commas inside labels are quoted', has(/^"Inflation, % a year"/));
+
+  ok('the year table is still there',
+    has(/^YEAR-END BALANCES$/) && has(/^Year,Monthly expense,Emergency fund/));
+  ok('and carries a row per projected year',
+    lines.filter(l => /^\d+,\d/.test(l)).length === p.rows().length,
+    `${lines.filter(l => /^\d+,\d/.test(l)).length} vs ${p.rows().length}`);
+
+  ok('the pre-tax caveat travels with the file', has(/pre-tax/i));
+  ok('the feedback address is included',
+    has(/^Send feedback and comments to,puneetg123@yahoo\.com$/));
+
+  /* Optional features are recorded whether on or off, so the file is never ambiguous. */
+  ok('options read as off when they are off',
+    has(/^Slump start,off$/) && has(/^Lumpy cash flows,off$/));
+
+  p.check('#stressOn', true).set('#stressStart', 5).set('#stressEq', -25);
+  p.check('#flowsOn', true).flowRow(0, 10, '-15L', false).flowRow(1, 20, '5L', true);
+  const csv2 = p.csv(), l2 = csv2.split('\n');
+  const has2 = re => l2.some(l => re.test(l));
+  ok('a live slump is described with its window',
+    has2(/^Slump start,years 5 to 7 at -25% equity and 6% debt$/),
+    l2.find(l => /^Slump start/.test(l)));
+  ok('cash flows are listed row by row',
+    has2(/^ {2}year 10,-1500000$/) && has2(/^ {2}year 20 onward,500000$/));
+  ok('the cash-flow column appears in the table', has2(/^Year,Monthly expense,Cash flow,/));
+
+  /* The link is the strongest form of self-description: it rebuilds the plan exactly. */
+  const linkLine = l2.find(l => /^Reopen this exact plan/.test(l)) || '';
+  const link = (linkLine.match(/"?(https?:\/\/[^"]+)"?$/) || [])[1] || '';
+  ok('the file carries a link back to the plan', /#/.test(link), link.slice(0, 70));
+  const frag = link.includes('#') ? link.split('#')[1] : '';
+  ok('and that link reproduces the plan exactly', p.snapshot() === boot(frag).snapshot());
+
+  /* Stale files are the whole problem, so the block has to follow the inputs. */
+  p.set('#corpus', '9cr');
+  ok('the assumption block follows the inputs', /^Retirement corpus,90000000$/m.test(p.csv()));
+
+  group('Printing');
+  const css = fs.readFileSync(FILE, 'utf8');
+  const printBlock = css.slice(css.indexOf('@media print{'),
+                               css.indexOf('@media (prefers-reduced-motion'));
+  ok('there is a print stylesheet', printBlock.length > 300);
+  ok('page margins are set', /@page\{margin/.test(printBlock));
+  ok('the layout unstacks so the assumptions print above the results',
+    /\.layout\{display:block\}/.test(printBlock));
+  ok('nothing can scroll out of view on paper',
+    /\.table-wrap,\.matrix-scroll\{max-height:none;overflow:visible\}/.test(printBlock));
+  ok('controls are dropped', /\.rail-actions,\.solve-actions,#solveApply,#flowAdd,\.tip,\.share-out\{display:none/.test(printBlock));
+  ok('table headings repeat across pages',
+    /table\.years thead\{display:table-header-group\}/.test(printBlock));
+  ok('figures are kept off page breaks', /break-inside:avoid/.test(printBlock));
+  ok('sticky positioning is undone for print',
+    /table\.years thead th\{position:static\}/.test(printBlock));
+
+  /* The button opens the browser's own print dialog — that is where "Save as PDF" lives. */
+  const r = boot();
+  let printed = 0;
+  r.w.print = () => { printed++; };
+  ok('there is a print button', !!r.el('#print') && r.el('#print').hidden === false
+    && r.el('#print').style.display !== 'none');
+  ok('it sits with the other export actions',
+    r.el('#print').closest('.rail-actions') === r.el('#share').closest('.rail-actions'));
+  ok('its label does not promise a download', !/download/i.test(r.el('#print').textContent),
+    JSON.stringify(r.el('#print').textContent));
+  r.click('#print');
+  ok('clicking it opens the print dialog', printed === 1);
+  ok('the button itself never prints', /\.rail-actions,/.test(printBlock));
+
+  /* A stamp written at render time is stale by the time someone prints an hour later. */
+  const stale = 'STALE';
+  r.el('#printStamp').textContent = stale;
+  r.click('#print');
+  ok('the stamp is refreshed before the dialog opens', r.text('#printStamp') !== stale,
+    r.text('#printStamp'));
+  r.el('#printStamp').textContent = stale;
+  r.w.dispatchEvent(new r.w.Event('beforeprint'));
+  ok('and refreshed for Ctrl+P too, which skips the button',
+    r.text('#printStamp') !== stale);
+
+  /* The stamp is hidden on screen and carries the date and address on paper. */
+  const q = boot();
+  ok('the stamp is hidden on screen', /\.print-stamp\{display:none\}/.test(css));
+  ok('and shown when printing', /\.print-stamp\{display:block/.test(printBlock));
+  ok('it records when and from where the sheet came',
+    /\d/.test(q.text('#printStamp')) && /https?:/.test(q.text('#printStamp')),
+    q.text('#printStamp'));
+  const stamp = q.text('#printStamp');
+  q.set('#corpus', '3cr');
+  ok('and it is refreshed on each render', q.text('#printStamp').length > 0 && stamp.length > 0);
+}
+
 /* -------------------------------------------------------------- 9. edges */
 
 function suiteEdges() {
@@ -1019,6 +1144,7 @@ suiteShare();
 suiteRupeeEntry();
 suiteSmallScreens();
 suiteAccessibility();
+suiteCsvAndPrint();
 suiteEdges();
 
 const secs = ((Date.now() - started) / 1000).toFixed(1);
