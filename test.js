@@ -876,6 +876,70 @@ function suiteSmallScreens() {
   ok('the page no longer claims to be laptop-only', !/not mobile friendly/i.test(css));
 }
 
+/* ------------------------------------------------------ 10. accessibility */
+
+function suiteAccessibility() {
+  group('Accessibility');
+  const p = boot();
+
+  /* A number spinbox with no accessible name is read as "edit, blank" — useless in a grid
+     whose meaning lives entirely in its row and column headers. */
+  const unlabelled = [...p.d.querySelectorAll('input')].filter(i => {
+    if (i.id && p.d.querySelector(`label[for="${i.id}"]`)) return false;
+    if (i.closest('label')) return false;
+    if (i.getAttribute('aria-label')) return false;
+    return true;
+  });
+  ok('every input has an accessible name', unlabelled.length === 0,
+    unlabelled.length ? unlabelled.map(i => i.id || i.dataset.k || i.type).join(',') : '');
+
+  const nameOf = sel => p.el(sel).getAttribute('aria-label') || '';
+  ok('a return cell names its asset',
+    /MidCap/.test(nameOf('input[data-k="ret"][data-i="1"]')) &&
+    /return/i.test(nameOf('input[data-k="ret"][data-i="1"]')),
+    nameOf('input[data-k="ret"][data-i="1"]'));
+  ok('a tax cell names its asset and that it is a rate',
+    /UltraShort/.test(nameOf('input[data-k="tax"][data-i="3"]')) &&
+    /tax/i.test(nameOf('input[data-k="tax"][data-i="3"]')));
+  ok('a weight cell names both its bucket and its asset',
+    /Bucket 2/.test(nameOf('input[data-k="w"][data-b="2"][data-i="0"]')) &&
+    /LargeCap/.test(nameOf('input[data-k="w"][data-b="2"][data-i="0"]')),
+    nameOf('input[data-k="w"][data-b="2"][data-i="0"]'));
+  /* All thirty must be distinct, or two cells announce as the same control. */
+  const names = [...p.d.querySelectorAll('input[data-k]')].map(i => i.getAttribute('aria-label'));
+  ok('all thirty grid cells are named distinctly',
+    names.length === 30 && new Set(names).size === 30, `${new Set(names).size} of ${names.length}`);
+
+  /* Warnings appear by changing text in a hidden paragraph, which announces nothing. */
+  ok('both warnings are live regions',
+    p.el('#weightWarn').getAttribute('aria-live') === 'polite' &&
+    p.el('#sizeWarn').getAttribute('aria-live') === 'polite');
+
+  /* role="img" means a screen reader reads the accessible name INSTEAD of the contents, so
+     that name has to carry what the picture says. */
+  const desc = () => p.el('#chart').getAttribute('aria-label') || '';
+  p.set('#corpus', '20cr');
+  ok('the chart description carries real figures',
+    /20\.00 Cr/.test(desc()) && /\d+ years/.test(desc()), desc().slice(0, 76) + '…');
+  ok('it says whether spending was funded', /funded/.test(desc()));
+  ok('it names the sealed fund left at the end', /emergency fund/.test(desc()));
+
+  p.set('#corpus', '1cr');
+  ok('and it reports a failure when one happens',
+    /can no longer be funded from year \d+/.test(desc()), desc().slice(-64));
+
+  p.set('#corpus', '20cr').check('#stressOn', true).set('#stressStart', 12).set('#stressEq', -30);
+  ok('it mentions a slump and where it lands',
+    /slump is applied to years 12 to 14/.test(desc()), desc().slice(-52));
+  p.check('#stressOn', false);
+  ok('and drops the mention when the slump is off', !/slump/.test(desc()));
+
+  /* The description has to follow the data, not be written once at boot. */
+  const before = desc();
+  p.set('#expense', '3L');
+  ok('the description is rebuilt on every render', desc() !== before);
+}
+
 /* -------------------------------------------------------------- 9. edges */
 
 function suiteEdges() {
@@ -954,6 +1018,7 @@ suiteFlows();
 suiteShare();
 suiteRupeeEntry();
 suiteSmallScreens();
+suiteAccessibility();
 suiteEdges();
 
 const secs = ((Date.now() - started) / 1000).toFixed(1);

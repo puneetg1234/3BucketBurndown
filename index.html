@@ -311,7 +311,7 @@ table.flows tbody tr:last-child td{padding-bottom:2px}
             <input id="mB3" type="text" value="whatever is left" disabled
               style="width:100%;font:inherit;font-size:13px;text-align:right;padding:9px 10px;border:1px dashed var(--rule);border-radius:2px;background:transparent;color:var(--muted)">
           </div>
-          <p class="warn" id="sizeWarn"></p>
+          <p class="warn" id="sizeWarn" role="status" aria-live="polite"></p>
         </fieldset>
 
         <fieldset>
@@ -332,62 +332,62 @@ table.flows tbody tr:last-child td{padding-bottom:2px}
               <tbody>
                 <tr>
                   <th>Return %<br>pre-tax</th>
-                  <td><input class="narrow" data-k="ret" data-i="0" type="number" min="-99" max="100" step="0.1" value="9"></td>
-                  <td><input class="narrow" data-k="ret" data-i="1" type="number" min="-99" max="100" step="0.1" value="10"></td>
-                  <td><input class="narrow" data-k="ret" data-i="2" type="number" min="-99" max="100" step="0.1" value="6"></td>
-                  <td><input class="narrow" data-k="ret" data-i="3" type="number" min="-99" max="100" step="0.1" value="5.5"></td>
-                  <td><input class="narrow" data-k="ret" data-i="4" type="number" min="-99" max="100" step="0.1" value="5"></td>
+                  <td><input class="narrow" data-k="ret" data-i="0" type="number" min="-99" max="100" step="0.1" value="9" aria-label="Equity LargeCap pre-tax return, percent a year"></td>
+                  <td><input class="narrow" data-k="ret" data-i="1" type="number" min="-99" max="100" step="0.1" value="10" aria-label="Equity MidCap/FlexiCap pre-tax return, percent a year"></td>
+                  <td><input class="narrow" data-k="ret" data-i="2" type="number" min="-99" max="100" step="0.1" value="6" aria-label="Debt Bonds/GILT pre-tax return, percent a year"></td>
+                  <td><input class="narrow" data-k="ret" data-i="3" type="number" min="-99" max="100" step="0.1" value="5.5" aria-label="Debt UltraShort pre-tax return, percent a year"></td>
+                  <td><input class="narrow" data-k="ret" data-i="4" type="number" min="-99" max="100" step="0.1" value="5" aria-label="Debt Liquid/Equity-Arb pre-tax return, percent a year"></td>
                   <td></td>
                 </tr>
                 <tr>
                   <th>Tax %<br>assumes long-term</th>
-                  <td><input class="narrow" data-k="tax" data-i="0" type="number" min="0" max="100" step="0.5" value="12.5"></td>
-                  <td><input class="narrow" data-k="tax" data-i="1" type="number" min="0" max="100" step="0.5" value="12.5"></td>
-                  <td><input class="narrow" data-k="tax" data-i="2" type="number" min="0" max="100" step="0.5" value="20"></td>
-                  <td><input class="narrow" data-k="tax" data-i="3" type="number" min="0" max="100" step="0.5" value="30"></td>
-                  <td><input class="narrow" data-k="tax" data-i="4" type="number" min="0" max="100" step="0.5" value="30"></td>
+                  <td><input class="narrow" data-k="tax" data-i="0" type="number" min="0" max="100" step="0.5" value="12.5" aria-label="Equity LargeCap long-term tax rate, percent"></td>
+                  <td><input class="narrow" data-k="tax" data-i="1" type="number" min="0" max="100" step="0.5" value="12.5" aria-label="Equity MidCap/FlexiCap long-term tax rate, percent"></td>
+                  <td><input class="narrow" data-k="tax" data-i="2" type="number" min="0" max="100" step="0.5" value="20" aria-label="Debt Bonds/GILT long-term tax rate, percent"></td>
+                  <td><input class="narrow" data-k="tax" data-i="3" type="number" min="0" max="100" step="0.5" value="30" aria-label="Debt UltraShort long-term tax rate, percent"></td>
+                  <td><input class="narrow" data-k="tax" data-i="4" type="number" min="0" max="100" step="0.5" value="30" aria-label="Debt Liquid/Equity-Arb long-term tax rate, percent"></td>
                   <td></td>
                 </tr>
                 <tr class="sep">
                   <th><span class="swatch" style="background:var(--ef)"></span>Emergency Fund</th>
-                  <td><input class="narrow" data-k="w" data-b="0" data-i="0" type="number" min="0" step="5" value="0"></td>
-                  <td><input class="narrow" data-k="w" data-b="0" data-i="1" type="number" min="0" step="5" value="0"></td>
-                  <td><input class="narrow" data-k="w" data-b="0" data-i="2" type="number" min="0" step="5" value="0"></td>
-                  <td><input class="narrow" data-k="w" data-b="0" data-i="3" type="number" min="0" step="5" value="0"></td>
-                  <td><input class="narrow" data-k="w" data-b="0" data-i="4" type="number" min="0" step="5" value="100"></td>
-                  <td class="sum" data-sum="0">100</td>
+                  <td><input class="narrow" data-k="w" data-b="0" data-i="0" type="number" min="0" step="5" value="0" aria-label="Emergency fund weight in Equity LargeCap, percent"></td>
+                  <td><input class="narrow" data-k="w" data-b="0" data-i="1" type="number" min="0" step="5" value="0" aria-label="Emergency fund weight in Equity MidCap/FlexiCap, percent"></td>
+                  <td><input class="narrow" data-k="w" data-b="0" data-i="2" type="number" min="0" step="5" value="0" aria-label="Emergency fund weight in Debt Bonds/GILT, percent"></td>
+                  <td><input class="narrow" data-k="w" data-b="0" data-i="3" type="number" min="0" step="5" value="0" aria-label="Emergency fund weight in Debt UltraShort, percent"></td>
+                  <td><input class="narrow" data-k="w" data-b="0" data-i="4" type="number" min="0" step="5" value="100" aria-label="Emergency fund weight in Debt Liquid/Equity-Arb, percent"></td>
+                  <td class="sum" role="status" data-sum="0">100</td>
                 </tr>
                 <tr>
                   <th><span class="swatch" style="background:var(--b1)"></span>Bucket 1</th>
-                  <td><input class="narrow" data-k="w" data-b="1" data-i="0" type="number" min="0" step="5" value="0"></td>
-                  <td><input class="narrow" data-k="w" data-b="1" data-i="1" type="number" min="0" step="5" value="0"></td>
-                  <td><input class="narrow" data-k="w" data-b="1" data-i="2" type="number" min="0" step="5" value="0"></td>
-                  <td><input class="narrow" data-k="w" data-b="1" data-i="3" type="number" min="0" step="5" value="100"></td>
-                  <td><input class="narrow" data-k="w" data-b="1" data-i="4" type="number" min="0" step="5" value="0"></td>
-                  <td class="sum" data-sum="1">100</td>
+                  <td><input class="narrow" data-k="w" data-b="1" data-i="0" type="number" min="0" step="5" value="0" aria-label="Bucket 1 weight in Equity LargeCap, percent"></td>
+                  <td><input class="narrow" data-k="w" data-b="1" data-i="1" type="number" min="0" step="5" value="0" aria-label="Bucket 1 weight in Equity MidCap/FlexiCap, percent"></td>
+                  <td><input class="narrow" data-k="w" data-b="1" data-i="2" type="number" min="0" step="5" value="0" aria-label="Bucket 1 weight in Debt Bonds/GILT, percent"></td>
+                  <td><input class="narrow" data-k="w" data-b="1" data-i="3" type="number" min="0" step="5" value="100" aria-label="Bucket 1 weight in Debt UltraShort, percent"></td>
+                  <td><input class="narrow" data-k="w" data-b="1" data-i="4" type="number" min="0" step="5" value="0" aria-label="Bucket 1 weight in Debt Liquid/Equity-Arb, percent"></td>
+                  <td class="sum" role="status" data-sum="1">100</td>
                 </tr>
                 <tr>
                   <th><span class="swatch" style="background:var(--b2)"></span>Bucket 2</th>
-                  <td><input class="narrow" data-k="w" data-b="2" data-i="0" type="number" min="0" step="5" value="20"></td>
-                  <td><input class="narrow" data-k="w" data-b="2" data-i="1" type="number" min="0" step="5" value="0"></td>
-                  <td><input class="narrow" data-k="w" data-b="2" data-i="2" type="number" min="0" step="5" value="80"></td>
-                  <td><input class="narrow" data-k="w" data-b="2" data-i="3" type="number" min="0" step="5" value="0"></td>
-                  <td><input class="narrow" data-k="w" data-b="2" data-i="4" type="number" min="0" step="5" value="0"></td>
-                  <td class="sum" data-sum="2">100</td>
+                  <td><input class="narrow" data-k="w" data-b="2" data-i="0" type="number" min="0" step="5" value="20" aria-label="Bucket 2 weight in Equity LargeCap, percent"></td>
+                  <td><input class="narrow" data-k="w" data-b="2" data-i="1" type="number" min="0" step="5" value="0" aria-label="Bucket 2 weight in Equity MidCap/FlexiCap, percent"></td>
+                  <td><input class="narrow" data-k="w" data-b="2" data-i="2" type="number" min="0" step="5" value="80" aria-label="Bucket 2 weight in Debt Bonds/GILT, percent"></td>
+                  <td><input class="narrow" data-k="w" data-b="2" data-i="3" type="number" min="0" step="5" value="0" aria-label="Bucket 2 weight in Debt UltraShort, percent"></td>
+                  <td><input class="narrow" data-k="w" data-b="2" data-i="4" type="number" min="0" step="5" value="0" aria-label="Bucket 2 weight in Debt Liquid/Equity-Arb, percent"></td>
+                  <td class="sum" role="status" data-sum="2">100</td>
                 </tr>
                 <tr>
                   <th><span class="swatch" style="background:var(--b3)"></span>Bucket 3</th>
-                  <td><input class="narrow" data-k="w" data-b="3" data-i="0" type="number" min="0" step="5" value="0"></td>
-                  <td><input class="narrow" data-k="w" data-b="3" data-i="1" type="number" min="0" step="5" value="80"></td>
-                  <td><input class="narrow" data-k="w" data-b="3" data-i="2" type="number" min="0" step="5" value="20"></td>
-                  <td><input class="narrow" data-k="w" data-b="3" data-i="3" type="number" min="0" step="5" value="0"></td>
-                  <td><input class="narrow" data-k="w" data-b="3" data-i="4" type="number" min="0" step="5" value="0"></td>
-                  <td class="sum" data-sum="3">100</td>
+                  <td><input class="narrow" data-k="w" data-b="3" data-i="0" type="number" min="0" step="5" value="0" aria-label="Bucket 3 weight in Equity LargeCap, percent"></td>
+                  <td><input class="narrow" data-k="w" data-b="3" data-i="1" type="number" min="0" step="5" value="80" aria-label="Bucket 3 weight in Equity MidCap/FlexiCap, percent"></td>
+                  <td><input class="narrow" data-k="w" data-b="3" data-i="2" type="number" min="0" step="5" value="20" aria-label="Bucket 3 weight in Debt Bonds/GILT, percent"></td>
+                  <td><input class="narrow" data-k="w" data-b="3" data-i="3" type="number" min="0" step="5" value="0" aria-label="Bucket 3 weight in Debt UltraShort, percent"></td>
+                  <td><input class="narrow" data-k="w" data-b="3" data-i="4" type="number" min="0" step="5" value="0" aria-label="Bucket 3 weight in Debt Liquid/Equity-Arb, percent"></td>
+                  <td class="sum" role="status" data-sum="3">100</td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <p class="warn" id="weightWarn"></p>
+          <p class="warn" id="weightWarn" role="status" aria-live="polite"></p>
         </fieldset>
 
         <fieldset id="stressBox" class="off">
@@ -1024,6 +1024,26 @@ function chartBox(){
     : { W, H: W < 700 ? 340 : 380, pad:PAD,       fs:11, fsLabel:12, dp:2 };
 }
 
+// What the picture actually says, in a sentence, for anyone who cannot see it.
+function describeChart(res, s, view){
+  const open = view[0], end = view[view.length - 1];
+  const peak = view.reduce((a, r) => r.total > a.total ? r : a, view[0]);
+  const parts = [
+    `Stacked area chart of the retirement corpus across ${end.year} years, split into the sealed emergency fund and buckets 1 to 3.`,
+    `It opens at ${money(open.total)} and ends at ${money(end.total)}, against monthly spending rising from ${money(open.monthly)} to ${money(end.monthly)}.`
+  ];
+  if (peak.year !== 0 && peak.year !== end.year)
+    parts.push(`The corpus peaks at ${money(peak.total)} in year ${peak.year}.`);
+  parts.push(res.failYear && res.failYear <= s.horizon
+    ? `Spending can no longer be funded from year ${res.failYear}.`
+    : `Spending is funded for the whole projection.`);
+  if (end.bal[0] > 0.5)
+    parts.push(`${money(end.bal[0])} of the closing figure is the sealed emergency fund, which is never spendable.`);
+  if (s.stress)
+    parts.push(`A slump is applied to years ${slumpFirst(s)} to ${slumpLast(s)}.`);
+  return parts.join(" ");
+}
+
 function renderChart(res, s, view){
   const svg = $("#chart"), box = chartBox();
   const W = box.W, H = box.H, PAD = box.pad, FS = box.fs, FSL = box.fsLabel, DP = box.dp;
@@ -1096,6 +1116,7 @@ function renderChart(res, s, view){
   out += `<line x1="${PAD.l}" y1="${PAD.t+ih}" x2="${W-PAD.r}" y2="${PAD.t+ih}" stroke="#16262c" stroke-width="1"/>`;
   out += `<line class="guide" x1="0" y1="${PAD.t}" x2="0" y2="${PAD.t+ih}" stroke="#16262c" stroke-width="1" opacity="0"/>`;
   svg.innerHTML = out;
+  svg.setAttribute("aria-label", describeChart(res, s, view));
 
   chartHit = view.map((r,i)=>({ x:X(i), r }));
 }
